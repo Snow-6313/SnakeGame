@@ -1937,10 +1937,13 @@ function applySelectedTheme() {
     root.style.setProperty('--theme-accent',  preset.uiAccent)
     root.style.setProperty('--theme-border',  preset.uiBorder)
     root.style.setProperty('--theme-glow',    preset.uiGlow)
-    // Update canvas border to match
-    document.getElementById('gameCanvas').style.borderColor = preset.uiBorder
-    // Also apply box-shadow glow to canvas
-    document.getElementById('gameCanvas').style.boxShadow = `0 0 20px ${preset.uiGlow}`
+    // Update canvas inline styles to match (overrides any CSS defaults)
+    const canvas = document.getElementById('gameCanvas')
+    canvas.style.borderColor = preset.uiBorder
+    canvas.style.background  = preset.background || preset.uiBg
+    canvas.style.boxShadow   = `0 0 20px ${preset.uiGlow}`
+    // Redraw background immediately so the change is visible before next tick
+    if (typeof Renderer !== 'undefined') Renderer.drawBackground()
 }
 
 // ── Theme card builder ──

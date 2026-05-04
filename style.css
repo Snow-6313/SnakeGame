@@ -76,8 +76,8 @@ body:has(#titleScreen:not(.hidden)) #topBar span:first-child {
 }
 
 #gameCanvas {
-    background: #0d1f3c;
-    border: 3px solid #1e3a6e;
+    background: var(--theme-bg, #0d1f3c);
+    border: 3px solid var(--theme-border, #1e3a6e);
     display: block;
 }
 
@@ -878,15 +878,15 @@ body:has(#titleScreen:not(.hidden)) #topBar span:first-child {
 #gameCanvas.warn-teleport  { animation: canvasPulsePurple 0.8s ease-in-out infinite alternate; }
 
 @keyframes canvasPulseRed {
-    from { border-color: #1e3a6e; }
+    from { border-color: var(--theme-border); }
     to   { border-color: #ff4422; box-shadow: 0 0 10px rgba(255,60,0,0.55); }
 }
 @keyframes canvasPulseBlue {
-    from { border-color: #1e3a6e; }
+    from { border-color: var(--theme-border); }
     to   { border-color: #00ccff; box-shadow: 0 0 10px rgba(0,200,255,0.55); }
 }
 @keyframes canvasPulsePurple {
-    from { border-color: #1e3a6e; }
+    from { border-color: var(--theme-border); }
     to   { border-color: #cc44ff; box-shadow: 0 0 10px rgba(180,50,255,0.55); }
 }
 
@@ -1685,3 +1685,208 @@ button:hover {
 #titleScreen h1 { margin-top: -10px }
 #themePickerRow { margin-top: 4px }
 
+/* ══════════════════════════════════════════════════════════════
+   THEME COLOUR OVERRIDES
+   Targeted overrides so UI elements respect CSS variables.
+   ══════════════════════════════════════════════════════════════ */
+
+/* Body background */
+body { background: var(--theme-body-bg, #0a1628); }
+
+/* Canvas */
+#gameCanvas {
+    background: var(--theme-bg, #0d1f3c);
+    border-color: var(--theme-border, #1e3a6e);
+    box-shadow: 0 0 20px var(--theme-glow, rgba(255,140,0,0.25));
+}
+
+/* Accent text */
+h1,
+#titleScreen h1,
+#topBar span:first-child,
+#topBar strong,
+#scoreBoard strong,
+#restartPromptBox h2,
+.help-section h3,
+#helpHeader h2 { color: var(--theme-accent, #ff8c00); }
+
+/* Main game buttons (controls bar + win screen) */
+#startBtn, #restartBtn, #howToPlayBtn, #lbBtn, #winRestartBtn {
+    background: var(--theme-accent, #ff8c00);
+    color: var(--theme-bg, #0a1628);
+}
+#startBtn:hover, #restartBtn:hover, #howToPlayBtn:hover, #lbBtn:hover, #winRestartBtn:hover {
+    filter: brightness(1.12);
+    background: var(--theme-accent, #ff8c00);
+}
+
+/* Restart-prompt new-name button */
+#restartNewNameBtn {
+    background: var(--theme-accent, #ff8c00);
+    color: var(--theme-bg, #0a1628);
+}
+#restartNewNameBtn:hover { filter: brightness(1.12); background: var(--theme-accent, #ff8c00); }
+
+/* Title screen leaderboard button */
+#titleLbBtn {
+    background: transparent;
+    color: var(--theme-accent, #ff8c00);
+    border: 1.5px solid var(--theme-accent, #ff8c00);
+}
+#titleLbBtn:hover { background: var(--theme-glow, rgba(255,140,0,0.25)); }
+
+/* Event banner (non-harmful) */
+#eventBanner {
+    background: var(--theme-accent, #ff8c00);
+    color: var(--theme-bg, #0a1628);
+}
+/* harmful/legendary/mythic keep their own overriding rules above */
+
+/* Timer + length bars */
+#eventTimerBar  { background: var(--theme-border, #1e3a6e); }
+#eventTimerFill { background: var(--theme-accent, #ff8c00); }
+#lengthMultBar  { background: var(--theme-border, #1e3a6e); }
+
+/* Restart prompt box */
+#restartPromptBox {
+    background: var(--theme-bg, #112244);
+    border-color: var(--theme-accent, #ff8c00);
+}
+#restartNameInput {
+    border-color: var(--theme-border, #1e3a6e);
+    background: var(--theme-bg, #0d1f3c);
+}
+#restartNameInput:focus { border-color: var(--theme-accent, #ff8c00); }
+
+/* Help modal */
+#helpContent {
+    background: var(--theme-bg, #0d1f3c);
+    border-color: var(--theme-border, #1e3a6e);
+}
+#helpHeader { border-bottom-color: var(--theme-border, #1e3a6e); }
+
+/* Leaderboard modal */
+#lbContent {
+    background: var(--theme-bg, #0d1f3c);
+    border-color: var(--theme-border, #1e3a6e);
+}
+#lbHeader     { border-bottom-color: var(--theme-border, #1e3a6e); }
+#lbFooter     { border-top-color:    var(--theme-border, #1e3a6e); }
+#lbTabs       { border-bottom-color: var(--theme-border, #1e3a6e); }
+.lb-tab.active { color: var(--theme-accent, #ff8c00); border-bottom-color: var(--theme-accent, #ff8c00); }
+.lb-score      { color: var(--theme-accent, #ff8c00); }
+
+/* Win screen */
+#winContent {
+    background: var(--theme-bg, rgba(13,31,60,0.98));
+    border-color: rgba(255,215,0,0.4);
+    box-shadow: 0 0 60px var(--theme-glow), 0 8px 40px rgba(0,0,0,0.8);
+}
+
+/* God's Eye overlay */
+#godsEyeBox          { background: var(--theme-bg, #0d1f3c); border-color: var(--theme-accent, #9b59b6); }
+#godsEyeQueueList    { border-bottom-color: var(--theme-border, #1e3060); }
+#godsEyeFooter       { border-top-color:    var(--theme-border, #1e3060); }
+#godsEyeSearch       { border-color: var(--theme-border, #2a3f6f); background: var(--theme-bg, #0a1628); }
+#godsEyeSearch:focus { border-color: var(--theme-accent, #9b59b6); }
+#godsEyeConfirmBtn   { background: var(--theme-accent, #9b59b6); }
+#godsEyeConfirmBtn:hover { filter: brightness(1.2); }
+
+/* Theme modal */
+#themeModalBox    { background: var(--theme-bg, #0b1830); }
+#themeModalHeader { color: var(--theme-accent); border-bottom-color: var(--theme-border); }
+
+/* Debug panel */
+#debugPanel                  { border-color: var(--theme-accent, #ff8c00); }
+#debugHeader span:first-child { color: var(--theme-accent, #ff8c00); }
+#debugFireNow                { background: var(--theme-accent, #ff8c00); color: var(--theme-bg, #0a1628); }
+#debugFireNow:hover          { filter: brightness(0.9); }
+#debugFilter:focus           { border-color: var(--theme-accent, #ff8c00); }
+
+/* ── Additional theme overrides ── */
+
+/* Title screen overlay */
+#titleScreen {
+    background: color-mix(in srgb, var(--theme-bg, #0a1628) 93%, transparent);
+}
+#titleScreen h1 { color: var(--theme-accent, #ff8c00); }
+
+/* Title screen name input */
+#playerNameInput {
+    border-color: color-mix(in srgb, var(--theme-accent, #ff8c00) 50%, transparent);
+    background: color-mix(in srgb, var(--theme-bg, #0a1628) 93%, transparent);
+}
+#playerNameInput:focus { border-color: var(--theme-accent, #ff8c00); }
+
+/* Global button fallback */
+button {
+    background: var(--theme-accent, #ff8c00);
+    color: var(--theme-bg, #0a1628);
+}
+button:hover { background: var(--theme-accent, #ff8c00); filter: brightness(0.9); }
+
+/* Bottom control buttons */
+#restartBtn, #howToPlayBtn, #lbBtn {
+    background: var(--theme-accent, #ff8c00);
+    color: var(--theme-bg, #0a1628);
+}
+#restartBtn:hover, #howToPlayBtn:hover, #lbBtn:hover {
+    filter: brightness(0.9);
+    background: var(--theme-accent, #ff8c00);
+}
+
+/* Event banner */
+#eventBanner { background: var(--theme-accent, #ff8c00); color: var(--theme-bg, #0a1628); }
+
+/* Upcoming events panel */
+#upcomingPanel {
+    background: color-mix(in srgb, var(--theme-bg, #0a1628) 93%, transparent);
+    border-color: var(--theme-accent, #9b59b6);
+}
+#upcomingTitle { color: color-mix(in srgb, var(--theme-accent, #ff8c00) 70%, #fff); }
+
+/* God's Eye header */
+#godsEyeHeader {
+    background: color-mix(in srgb, var(--theme-bg, #0a1628) 70%, var(--theme-accent, #9b59b6));
+    border-bottom-color: color-mix(in srgb, var(--theme-accent, #9b59b6) 30%, transparent);
+    color: color-mix(in srgb, var(--theme-accent, #ff8c00) 60%, #fff);
+}
+
+/* Win screen subtitle accent */
+#winSubtitle strong, #winNextGoal strong { color: var(--theme-accent, #ff8c00); }
+
+/* Restart prompt background */
+#restartPrompt {
+    background: color-mix(in srgb, var(--theme-bg, #0a1628) 95%, transparent);
+}
+
+/* Scrollbars */
+#debugList, #debugQueueList, #helpBody, #lbList {
+    scrollbar-color: var(--theme-accent, #ff8c00) transparent;
+}
+#debugList::-webkit-scrollbar-thumb,
+#debugQueueList::-webkit-scrollbar-thumb,
+#helpBody::-webkit-scrollbar-thumb,
+#lbList::-webkit-scrollbar-thumb { background: var(--theme-accent, #ff8c00); }
+
+/* Top bar labels */
+#topBar span:first-child { color: var(--theme-accent, #ff8c00); }
+#topBar strong           { color: var(--theme-accent, #ff8c00); }
+#scoreBoard strong       { color: var(--theme-accent, #ff8c00); }
+
+/* Help section headings */
+.help-section h3 {
+    color: var(--theme-accent, #ff8c00);
+    border-bottom-color: color-mix(in srgb, var(--theme-accent, #ff8c00) 20%, transparent);
+}
+
+/* Debug queue section */
+#debugQueueSection { border-top-color: color-mix(in srgb, var(--theme-accent, #ff8c00) 25%, transparent); }
+#debugQueueHeader  { background: color-mix(in srgb, var(--theme-accent, #ff8c00) 8%, transparent); }
+#debugQueueHeader span:first-child { color: var(--theme-accent, #ff8c00); }
+.debug-item:hover .debug-add-btn   { color: var(--theme-accent, #ff8c00); }
+.dq-btn:hover:not(:disabled)       { background: color-mix(in srgb, var(--theme-accent, #ff8c00) 30%, transparent); }
+
+/* Debug header border */
+#debugHeader { border-bottom-color: color-mix(in srgb, var(--theme-accent, #ff8c00) 25%, transparent); background: color-mix(in srgb, var(--theme-accent, #ff8c00) 12%, transparent); }
+#debugFilter:focus { border-color: var(--theme-accent, #ff8c00); }
