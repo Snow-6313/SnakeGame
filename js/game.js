@@ -1457,6 +1457,57 @@ Renderer.drawBackground()
         buildQueue()
         return ev
     }
+
+    // ── localStorage Import / Export ──
+    const exportBtn      = document.getElementById('debugExportBtn')
+    const importBtn      = document.getElementById('debugImportBtn')
+    const importFile     = document.getElementById('debugImportFile')
+    const storageFeedback = document.getElementById('debugStorageFeedback')
+
+    function storageFeedbackMsg(msg, isError) {
+        storageFeedback.textContent = msg
+        storageFeedback.style.color = isError ? '#ff6b6b' : '#4ec94e'
+        clearTimeout(storageFeedbackMsg._t)
+        storageFeedbackMsg._t = setTimeout(() => { storageFeedback.textContent = '' }, 3000)
+    }
+
+    exportBtn.addEventListener('click', () => {
+        const data = {}
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i)
+            data[key] = localStorage.getItem(key)
+        }
+        const json = JSON.stringify(data, null, 2)
+        const blob = new Blob([json], { type: 'application/json' })
+        const url  = URL.createObjectURL(blob)
+        const a    = document.createElement('a')
+        a.href     = url
+        a.download = `snake-save-${new Date().toISOString().slice(0,10)}.json`
+        a.click()
+        URL.revokeObjectURL(url)
+        storageFeedbackMsg(`✓ Exported ${Object.keys(data).length} key(s)`)
+    })
+
+    importBtn.addEventListener('click', () => importFile.click())
+
+    importFile.addEventListener('change', () => {
+        const file = importFile.files[0]
+        if (!file) return
+        const reader = new FileReader()
+        reader.onload = (e) => {
+            try {
+                const data = JSON.parse(e.target.result)
+                if (typeof data !== 'object' || Array.isArray(data)) throw new Error('Invalid format')
+                const keys = Object.keys(data)
+                keys.forEach(key => localStorage.setItem(key, data[key]))
+                storageFeedbackMsg(`✓ Imported ${keys.length} key(s) — reload to apply`)
+            } catch (err) {
+                storageFeedbackMsg('✗ Invalid JSON file', true)
+            }
+            importFile.value = ''
+        }
+        reader.readAsText(file)
+    })
 })()
 
 // ══════════════════════════════════════════════════════

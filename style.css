@@ -644,6 +644,50 @@ body:has(#titleScreen:not(.hidden)) #topBar span:first-child {
     transition: opacity 0.3s;
 }
 
+/* ── Debug localStorage Import / Export ── */
+#debugStorageSection {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 7px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    flex-shrink: 0;
+    background: rgba(100,160,255,0.04);
+}
+
+#debugStorageLabel {
+    font-size: 0.72rem;
+    font-weight: bold;
+    color: #7ab8ff;
+    white-space: nowrap;
+}
+
+#debugStorageBtns {
+    display: flex;
+    gap: 5px;
+}
+
+#debugExportBtn, #debugImportBtn {
+    flex: 1;
+    background: rgba(100,160,255,0.18);
+    color: #7ab8ff;
+    border: 1px solid rgba(100,160,255,0.4);
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 0.72rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+#debugExportBtn:hover, #debugImportBtn:hover { background: rgba(100,160,255,0.4); color: #fff; }
+
+#debugStorageFeedback {
+    font-size: 0.7rem;
+    min-height: 1em;
+    color: #4ec94e;
+    transition: opacity 0.3s;
+}
+
 #debugHeader span:first-child {
     color: #ff8c00;
     font-weight: bold;
