@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="topBar">
+        <span>SNAKE</span>
+        <span>Score: <strong id="scoreDisplay">0</strong> | Best: <strong id="highScoreDisplay">0</strong></span>
+        <span id="streakDisplay" class="hidden">🔥 <strong id="streakCount">0</strong> streak &nbsp;<strong id="streakMult">1x</strong></span>
+        <span id="messageText">Press START</span>
+    </div>
+
+    <!-- Canvas + overlay wrapper -->
+    <div id="canvasWrapper">
+
+        <canvas id="gameCanvas" width="560" height="560"></canvas>
+
+        <!-- Pre-event warning: small corner badge + canvas border pulse -->
+        <div id="warningOverlay" class="hidden">
+            <div id="warningIcon"></div>
+            <div id="warningTitle"></div>
+            <div id="warningEventName"></div>
+            <div id="warningSubtext"></div>
+            <div id="warningBar"><div id="warningBarFill"></div></div>
+        </div>
+
+        <!-- Title screen overlay -->
+        <div id="titleScreen">
+            <h1>SNAKE</h1>
+            &nbsp;
+            <input id="playerNameInput" type="text" maxlength="16" placeholder="Your name…" autocomplete="off" spellcheck="false">
+            <div id="nameErrorMsg"></div>
+
+            <!-- Theme picker: button opens modal -->
+            <div id="themePickerRow">
+                <button id="themePickerBtn">🎨 <span id="themePickerBtnLabel">Classic</span></button>
+            </div>
+
+            <div id="titleBtns">
+                <button id="startBtn">▶ PLAY</button>
+                <button id="titleLbBtn">🏆 SCORES</button>
+            </div>
+        </div>
+
+        <!-- Post-death name prompt overlay -->
+        <div id="restartPrompt" class="hidden">
+            <div id="restartPromptBox">
+                <h2>Game Over</h2>
+                <p id="restartPromptMsg"></p>
+                <button id="restartSameNameBtn">▶ Play as "<span id="restartSameNameLabel"></span>" <small>(deletes last entry)</small></button>
+                <div id="restartPromptDivider">— or pick a new name —</div>
+                <input id="restartNameInput" type="text" maxlength="16" placeholder="New name…" autocomplete="off" spellcheck="false">
+                <div id="restartNameError"></div>
+                <button id="restartNewNameBtn">▶ Play with new name</button>
+            </div>
+        </div>
+
+        <!-- Hidden cheat-code input (invisible, captures keystrokes after death) -->
+        <input id="cheatInput" type="text" autocomplete="off" spellcheck="false" tabindex="-1"
+               style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;top:0;left:0;border:none;outline:none;">
+
+        <!-- God's Eye: in-game queue editor overlay -->
+        <div id="godsEyeOverlay" class="hidden">
+            <div id="godsEyeBox">
+                <div id="godsEyeHeader">
+                    <span>👁️ GOD'S EYE — Edit the Queue</span>
+                    <span id="godsEyeLegendaryNote">⚠ Max 1 legendary per edit</span>
+                </div>
+                <div id="godsEyeQueueList"></div>
+                <div id="godsEyeAddSection">
+                    <div id="godsEyeAddTitle">Add an event:</div>
+                    <div id="godsEyeFilter"><input id="godsEyeSearch" type="text" placeholder="Filter…" autocomplete="off" spellcheck="false"></div>
+                    <div id="godsEyeEventList"></div>
+                </div>
+                <div id="godsEyeFooter">
+                    <label id="godsEyeInvincLabel">
+                        <input type="checkbox" id="godsEyeInvincCheck"> Give me invincibility while editing
+                    </label>
+                    <button id="godsEyeConfirmBtn">✔ Confirm &amp; Resume</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Win screen overlay -->
+        <div id="winScreen" class="hidden">
+            <div id="winContent">
+                <div id="winTrophy">🏆</div>
+                <h2 id="winTitle">YOU WON!</h2>
+                <p id="winSubtitle">Score reached <strong id="winScoreDisplay">1000</strong></p>
+                <p id="winNextGoal">Next goal: <strong id="winNextDisplay">2000</strong></p>
+                <div id="winBonusInfo">Level up! Multipliers are now bigger 🚀</div>
+                <div id="winButtons">
+                    <button id="continueBtn">▶ CONTINUE</button>
+                    <button id="winRestartBtn">↺ RESTART</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- All Seeing Eye: upcoming events sidebar -->
+    <div id="upcomingPanel" class="hidden">
+        <div id="upcomingTitle">🔮 Up Next</div>
+        <div id="upcomingList"></div>
+    </div>
+
+    <div id="eventBanner" class="hidden">
+        <span id="eventIcon"></span> <span id="eventName"></span>
+    </div>
+    <div id="eventTimerBar" class="hidden">
+        <div id="eventTimerFill"></div>
+    </div>
+
+    <!-- Length Multiplier Visualizer -->
+    <div id="lengthMultBar" class="hidden">
+        <div id="lengthMultFill"></div>
+        <span id="lengthMultValue">🐍 1.00x</span>
+    </div>
+
+    <div id="controls" class="hidden">
+        <!--Redraws game :shocked:-->
+        <button id="restartBtn">RESTART</button>
+        <button id="howToPlayBtn">HOW TO PLAY</button>
+        <button id="lbBtn">SCORES</button>
+    </div>
+
+    <!--This game is self explanatory but i put this here incase-->
+    <p id="instructions">Arrow Keys / WASD · Eat orange food · Avoid walls &amp; yourself · Events every 8s</p>
+
+    <!-- How To Play Modal -->
+    <div id="helpModal" class="hidden">
+        <div id="helpContent">
+            <div id="helpHeader">
+                <h2>❓ HOW TO PLAY</h2>
+                <button id="helpCloseBtn" title="Close">✕</button>
+            </div>
+            <div id="helpBody">
+
+                <section class="help-section">
+                    <h3>🎮 Controls</h3>
+                    <ul>
+                        <li><strong>Arrow Keys</strong> or <strong>WASD</strong> — Move the snake up, down, left, right</li>
+                        <li>You <strong>cannot</strong> reverse direction — turning 180° instantly kills you!</li>
+                        <li>Eat the <strong style="color:#ff8c00">orange food</strong> to grow longer and earn points</li>
+                        <li>Avoid hitting <strong>walls</strong> or your <strong>own body</strong> — both end the game</li>
+                        <li>Reach the <strong style="color:#ff8c00">score target</strong> shown at the top to win the level and progress</li>
+                    </ul>
+                </section>
+
+                <section class="help-section">
+                    <h3>📊 Scoring &amp; Multipliers</h3>
+                    <p class="help-note">All multipliers <strong>stack together</strong> — your final points = base × streak × length × event multipliers.</p>
+                    <ul>
+                        <li>🟠 <strong>Orange food</strong> = <strong>10 pts base</strong></li>
+                        <li>✨ <strong>Bonus food</strong> (white/glowing) = <strong>25 pts base</strong> — spawned by events</li>
+                        <li>🔥 <strong>Streak Multiplier</strong> — eating 3+ foods <em>in a row without stopping</em> builds a streak. Every 3 eats adds +0.5× (e.g. 6 eats = 2×, 9 eats = 2.5×). Shown at the top when active.</li>
+                        <li>� <strong>Length Multiplier</strong> — the longer your snake, the bigger the bonus. Watch the green bar under the canvas. Longer snake = more multiplier!</li>
+                        <li>⚡ <strong>Event Multipliers</strong> — some events (Double Points, Triple Points, etc.) add an extra stack on top of everything else</li>
+                    </ul>
+                    <p class="help-note">Example: eating food with a 2× streak, 1.5× length, and a 2× event active = <strong>10 × 2 × 1.5 × 2 = 60 pts</strong>!</p>
+                </section>
+
+                <section class="help-section">
+                    <h3>🏆 Win Levels</h3>
+                    <ul>
+                        <li>Each level has a <strong style="color:#ff8c00">score target</strong> (starts at 1000 pts). Hit it to win!</li>
+                        <li>After winning, you <strong>continue</strong> with a harder target and bigger multiplier tiers</li>
+                        <li>Each win level makes the length multiplier scale faster and higher</li>
+                    </ul>
+                </section>
+
+                <section class="help-section">
+                    <h3>⚡ Events</h3>
+                    <p class="help-note">A random event fires every <strong>8 seconds</strong>. Events can be <span style="color:#4ec94e">helpful</span>, <span style="color:#ff5555">harmful</span>, or both! Harmful events always show a <strong>⚠️ warning countdown</strong> before they trigger so you can prepare.</p>
+
+                    <div class="help-rarity-label common">Common</div>
+                    <div class="help-event-list">
+                        <div class="help-event">💨 <strong>Speed Boost</strong> — Move faster for 5s. Great for chasing food quickly, but harder to steer!</div>
+                        <div class="help-event">🐢 <strong>Slow Motion</strong> — Move slower for 5s. Easier to navigate tight spaces.</div>
+                        <div class="help-event">🍎 <strong>Bonus Food</strong> — 1 extra glowing food tile spawns for 4s. Worth 25 pts — eat it fast!</div>
+                        <div class="help-event">🔁 <strong>Loop Board</strong> — Walls wrap around Pac-Man style for 6s. You can't die from walls but can still die from yourself!</div>
+                        <div class="help-event harmful">🌀 <strong>Teleport</strong> ⚠️ — Your head jumps to a random safe tile. A blinking <strong>preview dot</strong> shows where you'll land before it fires!</div>
+                        <div class="help-event harmful">🐍 <strong>Growth</strong> ⚠️ — Snake instantly gains 5 extra segments. More length = harder to dodge yourself.</div>
+                        <div class="help-event harmful">🔺 <strong>Bigger Snake</strong> ⚠️ — Snake gains 3 extra segments.</div>
+                    </div>
+
+                    <div class="help-rarity-label rare">Rare</div>
+                    <div class="help-event-list">
+                        <div class="help-event">⭐ <strong>Double Points</strong> — All points are ×2 for 6s. Stack this with a streak for huge scores!</div>
+                        <div class="help-event">👻 <strong>Ghost Mode</strong> — Pass through walls <em>and</em> your own body for 4s. You literally cannot die from collisions!</div>
+                        <div class="help-event">🍕 <strong>Food Frenzy</strong> — 3 bonus foods (25 pts each) spawn for 6s. Eat them all for massive points.</div>
+                        <div class="help-event">🔻 <strong>Mini Snake</strong> — Snake shrinks down to just 3 segments. Great for escaping a congested board!</div>
+                        <div class="help-event">🔲 <strong>Expand Board</strong> — Board grows by 5 tiles in each direction. More room to move!</div>
+                        <div class="help-event">🪄 <strong>Point Surge</strong> — Free +25 points, instantly!</div>
+                        <div class="help-event">🎯 <strong>Moving Food</strong> — The main food slowly drifts around the board for 6s. Keep chasing it!</div>
+                        <div class="help-event">🧲 <strong>Magnet</strong> — Food nudges toward your snake's head every second for 6s. Food comes to you!</div>
+                        <div class="help-event">❄️ <strong>Freeze Growth</strong> — Eating food won't grow your snake for 5s. Eat freely without getting longer.</div>
+                        <div class="help-event">🎁 <strong>Mystery Box</strong> — A flashing rainbow <strong>?</strong> tile appears on the board. Eat it for a surprise: could be a big event, bonus points, or your snake maxed out!</div>
+                        <div class="help-event harmful">💸 <strong>Score Drain</strong> ⚠️ — Lose 3 pts every second for 5s. Keep eating to offset the loss!</div>
+                        <div class="help-event harmful">🔄 <strong>Reverse Controls</strong> ⚠️ — All directions are completely flipped for 5s. Up→Down, Left→Right. Think before each move!</div>
+                        <div class="help-event harmful">🌪️ <strong>Shuffle Food</strong> ⚠️ — All food (including bonus tiles) instantly teleports to new random locations.</div>
+                        <div class="help-event harmful">🕹️ <strong>Swap Controls</strong> ⚠️ — Up↔Down and Left↔Right are swapped for 5s. The axis pairs flip rather than full reversal.</div>
+                        <div class="help-event harmful">📉 <strong>Length Drain</strong> ⚠️ — Instantly lose 5 segments. If you're already short, this is very dangerous!</div>
+                        <div class="help-event harmful">🧱 <strong>Wall Maze</strong> ⚠️ — 6 solid wall tiles are scattered on the board for 8s. Hitting any of them ends the game!</div>
+                        <div class="help-event harmful">🪤 <strong>Fake Food</strong> ⚠️ — 3 decoy food tiles appear that look nearly identical to real food. Eating one wastes your turn and gives nothing!</div>
+                    </div>
+
+                    <div class="help-rarity-label epic">Epic</div>
+                    <div class="help-event-list">
+                        <div class="help-event">💎 <strong>Triple Points</strong> — All points are ×3 for 5s. Combined with streaks and length, scores explode!</div>
+                        <div class="help-event">🛡️ <strong>Invincible</strong> — You cannot die for 4s. Walls and self-collisions are completely ignored.</div>
+                        <div class="help-event">✂️ <strong>Shrink</strong> — Your snake is instantly cut to half its current length. Very helpful on a congested board.</div>
+                        <div class="help-event">📈 <strong>Score Growth</strong> — Gain 3 pts automatically every second for 5s. Free points while you play!</div>
+                        <div class="help-event">🌟 <strong>Score Multiplier ×5</strong> — All points are ×5 for 4s. The most powerful point event — eat as many foods as possible!</div>
+                        <div class="help-event">🚀 <strong>Length Surge</strong> — Instantly gain 5 extra segments, boosting your length multiplier right away.</div>
+                        <div class="help-event">🔮 <strong>Multiplier Boost</strong> — Your length multiplier is doubled for 6s. Pairs amazingly with a long snake.</div>
+                        <div class="help-event harmful">📦 <strong>Shrink Board</strong> ⚠️ — The board shrinks inward. Any snake segments in the removed border zone are <strong>cut off</strong>!</div>
+                        <div class="help-event harmful">⚡ <strong>Speed Trap</strong> ⚠️ — Extremely fast movement for 4s. Survival is the priority — steer carefully!</div>
+                        <div class="help-event harmful">🌑 <strong>Blind</strong> ⚠️ — Near-total darkness for 4s. Only a tiny glow around your head is visible. Memorise the board layout!</div>
+                        <div class="help-event harmful">💀 <strong>Poison</strong> ⚠️ — Lose 1 segment every 1.5s for 6s (up to 4 segments total). Keep eating to grow back!</div>
+                        <div class="help-event harmful">🎲 <strong>Chaos</strong> ⚠️ — Triggers 2 additional random events back-to-back immediately. Anything can happen!</div>
+                        <div class="help-event harmful">🧊 <strong>Multiplier Freeze</strong> ⚠️ — Your length multiplier is locked at 1× for 6s. No bonus from snake length during this time.</div>
+                        <div class="help-event harmful">💥 <strong>Bomb Food</strong> ⚠️ — 8 bombs flood the board. 4 are disguised to look like regular food! Eating any bomb costs <strong>30 pts and 3 segments</strong>.</div>
+                        <div class="help-event harmful">🏃 <strong>Dash</strong> ⚠️ — Your snake automatically lurches forward several steps. Very hard to control mid-turn!</div>
+                        <div class="help-event harmful">🔀 <strong>Food Swap</strong> ⚠️ — Your snake's head and the main food tile instantly swap positions.</div>
+                        <div class="help-event harmful">🪞 <strong>Mirror Board</strong> ⚠️ — The entire screen is horizontally flipped for 7s. Left looks right, right looks left. Very disorienting!</div>
+                        <div class="help-event harmful">💣 <strong>Ticking Time Bomb</strong> ⚠️ — A countdown tile appears. Eat it within 5 seconds to defuse it (+20 pts) or it explodes: -10 pts and -2 segments!</div>
+                        <div class="help-event">🎰 <strong>Gamble</strong> — 50/50 chance. <strong>Win:</strong> +100 pts and your snake doubles in length. <strong>Lose:</strong> -50 pts and shrunk to 3 segments. Risk it!</div>
+                        <div class="help-event">⏪ <strong>Rewind</strong> — Your snake body instantly snaps back to where it was ~3 seconds ago. Great escape if you're cornered!</div>
+                    </div>
+
+                    <div class="help-rarity-label legendary">Legendary <span style="opacity:0.7;font-weight:400">(8% chance)</span></div>                    <div class="help-event-list">
+                        <div class="help-event legendary">👑 <strong>Golden Hour</strong> — ×10 points <em>plus</em> Ghost Mode <em>plus</em> Invincible all at once for 8s. The ultimate event!</div>
+                        <div class="help-event legendary">💰 <strong>Score Jackpot</strong> — Instantly +200 points, no strings attached.</div>
+                        <div class="help-event legendary">🔥 <strong>Full Send</strong> — Ultra fast speed + ×5 points + massive food storm for 8s. High risk, insane reward!</div>
+                        <div class="help-event legendary">⏸️ <strong>Time Stop</strong> — No new events can fire for 5s. Breathe and just play!</div>
+                        <div class="help-event legendary">🍽️ <strong>Feast</strong> — 8 bonus food tiles spawn simultaneously + instant +50 points. Eat them all before they expire!</div>
+                        <div class="help-event legendary">🔮 <strong>All Seeing Eye</strong> — Reveals the next 5 upcoming events in a sidebar. Knowledge is power!</div>
+                        <div class="help-event legendary harmful">😈 <strong>The Devil's Glare</strong> ⚠️ — Forces 3 rapid events to fire in quick succession. Brace yourself!</div>
+                        <div class="help-event legendary">👁️ <strong>God's Eye</strong> — Pauses the game and opens a queue editor. Handpick the next 5 events (max 1 legendary). Optional invincibility on resume!</div>
+                        <div class="help-event legendary">🌈 <strong>Prismatic</strong> — Every food you eat during this event has a <em>random</em> multiplier (0.5× to 8×) applied. Huge swings!</div>
+                        <div class="help-event legendary">👼 <strong>Divine Trade</strong> — A choice: sacrifice half your current score for a permanent +0.5× multiplier boost for the rest of the run.</div>
+                        <div class="help-event legendary harmful">🪐 <strong>Gravity Flip</strong> ⚠️ — All food slowly drifts upward every 0.6 seconds. Chase it before it wraps off the top!</div>
+                    </div>
+
+                    <div class="help-rarity-label mythic">Mythic <span style="opacity:0.7;font-weight:400">(1% chance · once per session)</span></div>
+                    <div class="help-event-list">
+                        <div class="help-event mythic">🌠 <strong>Cosmic Jackpot</strong> — An insanely rare event. Grants <strong>+2500 points</strong> instantly and triggers a full-screen rainbow celebration. Can only happen <em>once per game session</em>. If you see it, you're one of the lucky ones.</div>
+                    </div>
+                </section>
+
+                <section class="help-section">
+                    <h3>💡 Tips</h3>
+                    <ul>
+                        <li>Build a <strong style="color:#ffcc00">streak</strong> by eating food consecutively — every 3 eats adds +0.5× to all points</li>
+                        <li>Keep your snake <strong>long</strong> for a higher length multiplier — watch the 🐍 green bar fill up below the canvas</li>
+                        <li>During <strong>⚠️ harmful event warnings</strong>, move to open space so you have room to react when it hits</li>
+                        <li>Use <strong>Ghost Mode 👻</strong> aggressively — cut through your own body to reach food you normally couldn't</li>
+                        <li>Don't panic during <strong>Reverse/Swap Controls</strong> — slow down mentally and think one move at a time</li>
+                        <li>During <strong>Bomb Food 💥</strong>, real bombs look slightly different from normal food — learn to spot them!</li>
+                        <li>The <strong>Mystery Box 🎁</strong> is almost always worth eating — the rewards usually outweigh the risk</li>
+                        <li>All multipliers <strong>stack</strong> — a streak + long snake + point event can make each food worth <strong>hundreds of points</strong>!</li>
+                    </ul>
+                </section>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaderboard Modal -->
+    <div id="lbModal" class="hidden">
+        <div id="lbContent">
+            <div id="lbHeader">
+                <h2>🏆 LEADERBOARD</h2>
+                <button id="lbCloseBtn" title="Close">✕</button>
+            </div>
+            <div id="lbTabs">
+                <button class="lb-tab active" data-sort="score">Best Score</button>
+                <button class="lb-tab" data-sort="date">Recent</button>
+            </div>
+            <div id="lbList"></div>
+            <div id="lbFooter">
+                <span id="lbEntryCount"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Debug event forcer-->
+    <div id="debugPanel">
+        <div id="debugHeader">
+            <span>🛠️ DEBUG</span>
+            <button id="debugFireNow">⚡ Fire Now</button>
+            <button id="debugClearBtn" title="Clear entire queue">✕ Clear All</button>
+        </div>
+        <div id="debugScoreSection">
+            <span id="debugScoreLabel">🎯 Set Score</span>
+            <input id="debugScoreInput" type="number" min="0" placeholder="e.g. 500" autocomplete="off">
+            <button id="debugScoreBtn">Set</button>
+        </div>
+        <div id="debugLbSection">
+            <span id="debugLbLabel">📋 Leaderboard</span>
+            <div id="debugLbAddRow">
+                <input id="debugLbName" type="text" maxlength="16" placeholder="Name" autocomplete="off">
+                <input id="debugLbScore" type="number" min="0" placeholder="Score" autocomplete="off">
+                <button id="debugLbAddBtn">➕ Add</button>
+            </div>
+            <div id="debugLbRemoveRow">
+                <input id="debugLbRemoveIdx" type="number" min="1" placeholder="Rank # to remove" autocomplete="off">
+                <button id="debugLbRemoveBtn">🗑 Remove</button>
+            </div>
+            <button id="debugLbClearBtn">💥 Clear All</button>
+            <div id="debugLbFeedback"></div>
+        </div>
+        <div id="debugSearch">
+            <input id="debugFilter" type="text" placeholder="Filter events…" autocomplete="off" spellcheck="false">
+        </div>
+        <div id="debugList"></div>
+        <div id="debugQueueSection">
+            <div id="debugQueueHeader">
+                <span>📋 Queue: <strong id="debugQueueCount">0</strong> event(s)</span>
+                <span id="debugQueueHint">click events above to add</span>
+            </div>
+            <div id="debugQueueList"></div>
+        </div>
+    </div>
+
+    <!-- Theme Picker Modal (outside canvasWrapper so it overlays everything) -->
+    <div id="themeModal" class="hidden">
+        <div id="themeModalBox">
+            <div id="themeModalHeader">
+                <span>🎨 CHOOSE A THEME</span>
+                <button id="themeModalClose" title="Close">✕</button>
+            </div>
+            <div id="themeCardGrid"></div>
+        </div>
+    </div>
+
+    <script src="js/drawboard.js"></script>
+    <script src="js/events.js"></script>
+    <script src="js/game.js"></script>
+
+</body>
+</html>
