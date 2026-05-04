@@ -1,6 +1,6 @@
-# 🐍 Snake — Feature-Rich Browser Snake Game
+# 🐍 Snake: Feature-Rich Browser Snake Game
 
-A heavily expanded take on the classic Snake game, built with vanilla HTML, CSS, and JavaScript. Eat food, survive random events, chase high scores, and unlock escalating win levels — all in your browser with no dependencies.
+A heavily expanded take on the classic Snake game, built with vanilla HTML, CSS, and JavaScript. Eat food, survive random events, chase high scores, and unlock escalating win levels, all in your browser with no dependencies.
 
 ---
 
@@ -28,7 +28,7 @@ No build step or server required.
 
 - **Eat** the orange food to grow and score points.
 - **Avoid** hitting walls or your own body.
-- Every **8 seconds** a random event fires — it can help or hurt you.
+- Every **8 seconds** a random event fires, it can help or hurt you.
 - Reach the **score target** (default: 1 000 pts) to win a level and push on with a higher goal.
 
 ---
@@ -37,8 +37,8 @@ No build step or server required.
 
 ### Scoring System
 - **Base score** per food eaten, multiplied by your current length multiplier.
-- **Streak system** — consecutive eats without missing bump a streak counter; every 3 eats raises the streak multiplier.
-- **Win levels** — each continue scales the target and bonuses.
+- **Streak system**: consecutive eats without missing bump a streak counter; every 3 eats raises the streak multiplier.
+- **Win levels**: each continue scales the target and bonuses.
 
 ### Random Events (54 total)
 Events fire every 8 seconds. A **pre-warning banner** and countdown bar give you advance notice for dangerous events. Events are drawn from a persistent **5-event queue** shown in the Upcoming panel.
@@ -59,10 +59,10 @@ Speed Boost · Slow Motion · Double Points · Bonus Food · Ghost Mode · Tripl
 </details>
 
 ### Special Food Types
-- 🍎 **Bonus food** — extra score, temporary spawns.
-- 💣 **Bomb food** — eating it is painful; defuse the *Ticking Time Bomb* for +20 pts instead.
-- ❓ **Mystery Box** — random reward on eat.
-- 👻 **Fake food** — plays a sound but gives nothing.
+- 🍎 **Bonus food**: extra score, temporary spawns.
+- 💣 **Bomb food**: eating it is painful; defuse the *Ticking Time Bomb* for +20 pts instead.
+- ❓ **Mystery Box**: random reward on eat.
+- 👻 **Fake food**: plays a sound but gives nothing.
 
 ### God's Eye (in-game overlay)
 Pause the game mid-run and manually curate the next 5 events. Maximum 1 legendary per edit session.
@@ -78,7 +78,7 @@ Switch visual themes from the title screen. Choice is saved across sessions.
 
 | Theme | Flavour |
 |-------|---------|
-| Classic | Deep blue — the default |
+| Classic | Deep blue, the default |
 | Neon | Cyberpunk cyan & pink |
 | Forest | Earthy greens |
 | Cosmic | Deep space purple |
@@ -91,11 +91,11 @@ Switch visual themes from the title screen. Choice is saved across sessions.
 
 ### Other Highlights
 - **rAF-based game loop** with smooth sub-tick interpolation for fluid snake movement.
-- **Spawn protection** — 5 seconds of invincibility + ghost mode after a win continue.
-- **How to Play modal** — pauses the game while open.
-- **Hidden cheat code** — type `curtis67` after death to resume in-place with 5 s ghost mode.
-- **Low-score auto-cleanup** — runs under 50 pts are removed from the leaderboard after 30 s.
-- **Debug panel** (`?debug`) — force any event, edit the leaderboard, and set your score on the fly.
+- **Spawn protection**: 5 seconds of invincibility + ghost mode after a win continue.
+- **How to Play modal**: pauses the game while open.
+- **Hidden cheat code**: type `curtis67` after death to resume in-place with 5 s ghost mode.
+- **Low-score auto-cleanup**: runs under 50 pts are removed from the leaderboard after 30 s.
+- **Debug panel** (`?debug`): force any event, edit the leaderboard, and set your score on the fly.
 
 ---
 
@@ -106,7 +106,7 @@ SnakeGame/
 ├── index.html          # Markup, overlays, modals
 ├── style.css           # All styling & animations
 ├── js/
-│   ├── drawboard.js    # Renderer — canvas drawing, themes, interpolation
+│   ├── drawboard.js    # Renderer: canvas drawing, themes, interpolation
 │   ├── events.js       # All 54 event definitions (apply / remove logic)
 │   └── game.js         # Game loop, scoring, leaderboard, UI wiring
 └── Sounds/
@@ -118,10 +118,10 @@ SnakeGame/
 
 ## 🛠️ Tech Stack
 
-- **HTML5 Canvas** — game rendering
-- **Vanilla JavaScript (ES6+)** — no frameworks, no bundler
-- **CSS3** — UI, animations, theme variables
-- **localStorage** — leaderboard & theme persistence
+- **HTML5 Canvas**: game rendering
+- **Vanilla JavaScript (ES6+)**: no frameworks, no bundler
+- **CSS3**: UI, animations, theme variables
+- **localStorage**: leaderboard & theme persistence
 
 ---
 
