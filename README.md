@@ -127,4 +127,4 @@ SnakeGame/
 
 ## 📝 License
 
-This project is for personal / educational use. Feel free to fork and expand it.
+This project is for personal / educational use. Feel free to fork and expand it. Good luck!
