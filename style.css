@@ -1137,6 +1137,19 @@ button:hover {
     color: #555;
 }
 
+#versionTag {
+    position: fixed;
+    bottom: 6px;
+    right: 10px;
+    font-size: 0.65rem;
+    color: rgba(255,255,255,0.2);
+    font-family: monospace;
+    letter-spacing: 1px;
+    pointer-events: none;
+    user-select: none;
+    z-index: 9999;
+}
+
 /* Length Multiplier Visualizer */
 #lengthMultBar {
     width: min(560px, calc(100vw - 20px));
