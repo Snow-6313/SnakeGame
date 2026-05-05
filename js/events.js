@@ -1390,8 +1390,8 @@ function _showCosmicCelebration() {
         const rings = 4
         const cx = c.width / 2, cy = c.height / 2
         for (let r = 0; r < rings; r++) {
-            const ringProgress = ((elapsed / 600 + r * 0.25) % 1)
-            const ringR = ringProgress * Math.max(c.width, c.height) * 0.75
+            const ringProgress = (((elapsed / 600 + r * 0.25) % 1) + 1) % 1
+            const ringR = Math.max(0, ringProgress * Math.max(c.width, c.height) * 0.75)
             const ringAlpha = (1 - ringProgress) * 0.35 * fadeAlpha
             ctx.save()
             ctx.strokeStyle = `hsla(${(hueShift + r * 90) % 360},100%,75%,${ringAlpha})`
