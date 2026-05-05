@@ -106,7 +106,7 @@ body:has(#titleScreen:not(.hidden)) #topBar span:first-child {
 
 /* Post-death restart prompt */
 #restartPrompt {
-    position: absolute;
+    position: fixed;
     inset: 0;
     background: rgba(10, 22, 40, 0.95);
     display: flex;
@@ -126,6 +126,8 @@ body:has(#titleScreen:not(.hidden)) #topBar span:first-child {
     align-items: stretch;
     gap: 12px;
     width: min(320px, 90%);
+    max-height: 90vh;
+    overflow-y: auto;
     text-align: center;
 }
 #restartPromptBox h2 {
@@ -233,7 +235,7 @@ body:has(#titleScreen:not(.hidden)) #topBar span:first-child {
 
 /* ── God's Eye overlay ── */
 #godsEyeOverlay {
-    position: absolute;
+    position: fixed;
     inset: 0;
     background: rgba(5,12,25,0.97);
     z-index: 450;
@@ -400,6 +402,8 @@ body:has(#titleScreen:not(.hidden)) #topBar span:first-child {
     gap: 12px;
     width: 90%;
     max-width: 420px;
+    max-height: 90vh;
+    overflow-y: auto;
     padding: 32px 24px;
     background: rgba(13, 31, 60, 0.98);
     border: 2px solid rgba(255, 215, 0, 0.4);

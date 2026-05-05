@@ -47,60 +47,60 @@
             </div>
         </div>
 
-        <!-- Post-death name prompt overlay -->
-        <div id="restartPrompt" class="hidden">
-            <div id="restartPromptBox">
-                <h2>Game Over</h2>
-                <p id="restartPromptMsg"></p>
-                <button id="restartSameNameBtn">▶ Play as "<span id="restartSameNameLabel"></span>" <small>(deletes last entry)</small></button>
-                <div id="restartPromptDivider">— or pick a new name —</div>
-                <input id="restartNameInput" type="text" maxlength="16" placeholder="New name…" autocomplete="off" spellcheck="false">
-                <div id="restartNameError"></div>
-                <button id="restartNewNameBtn">▶ Play with new name</button>
-            </div>
-        </div>
-
         <!-- Hidden cheat-code input (invisible, captures keystrokes after death) -->
         <input id="cheatInput" type="text" autocomplete="off" spellcheck="false" tabindex="-1"
                style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;top:0;left:0;border:none;outline:none;">
 
-        <!-- God's Eye: in-game queue editor overlay -->
-        <div id="godsEyeOverlay" class="hidden">
-            <div id="godsEyeBox">
-                <div id="godsEyeHeader">
-                    <span>👁️ GOD'S EYE — Edit the Queue</span>
-                    <span id="godsEyeLegendaryNote">⚠ Max 1 legendary per edit</span>
-                </div>
-                <div id="godsEyeQueueList"></div>
-                <div id="godsEyeAddSection">
-                    <div id="godsEyeAddTitle">Add an event:</div>
-                    <div id="godsEyeFilter"><input id="godsEyeSearch" type="text" placeholder="Filter…" autocomplete="off" spellcheck="false"></div>
-                    <div id="godsEyeEventList"></div>
-                </div>
-                <div id="godsEyeFooter">
-                    <label id="godsEyeInvincLabel">
-                        <input type="checkbox" id="godsEyeInvincCheck"> Give me invincibility while editing
-                    </label>
-                    <button id="godsEyeConfirmBtn">✔ Confirm &amp; Resume</button>
-                </div>
+    </div><!-- end #canvasWrapper -->
+
+    <!-- Post-death name prompt (fixed overlay, outside canvas so it is never clipped) -->
+    <div id="restartPrompt" class="hidden">
+        <div id="restartPromptBox">
+            <h2>Game Over</h2>
+            <p id="restartPromptMsg"></p>
+            <button id="restartSameNameBtn">▶ Play as "<span id="restartSameNameLabel"></span>" <small>(deletes last entry)</small></button>
+            <div id="restartPromptDivider">— or pick a new name —</div>
+            <input id="restartNameInput" type="text" maxlength="16" placeholder="New name…" autocomplete="off" spellcheck="false">
+            <div id="restartNameError"></div>
+            <button id="restartNewNameBtn">▶ Play with new name</button>
+        </div>
+    </div>
+
+    <!-- God's Eye: in-game queue editor (fixed overlay, outside canvas so it is never clipped) -->
+    <div id="godsEyeOverlay" class="hidden">
+        <div id="godsEyeBox">
+            <div id="godsEyeHeader">
+                <span>👁️ GOD'S EYE — Edit the Queue</span>
+                <span id="godsEyeLegendaryNote">⚠ Max 1 legendary per edit</span>
+            </div>
+            <div id="godsEyeQueueList"></div>
+            <div id="godsEyeAddSection">
+                <div id="godsEyeAddTitle">Add an event:</div>
+                <div id="godsEyeFilter"><input id="godsEyeSearch" type="text" placeholder="Filter…" autocomplete="off" spellcheck="false"></div>
+                <div id="godsEyeEventList"></div>
+            </div>
+            <div id="godsEyeFooter">
+                <label id="godsEyeInvincLabel">
+                    <input type="checkbox" id="godsEyeInvincCheck"> Give me invincibility while editing
+                </label>
+                <button id="godsEyeConfirmBtn">✔ Confirm &amp; Resume</button>
             </div>
         </div>
+    </div>
 
-        <!-- Win screen overlay -->
-        <div id="winScreen" class="hidden">
-            <div id="winContent">
-                <div id="winTrophy">🏆</div>
-                <h2 id="winTitle">YOU WON!</h2>
-                <p id="winSubtitle">Score reached <strong id="winScoreDisplay">1000</strong></p>
-                <p id="winNextGoal">Next goal: <strong id="winNextDisplay">2000</strong></p>
-                <div id="winBonusInfo">Level up! Multipliers are now bigger 🚀</div>
-                <div id="winButtons">
-                    <button id="continueBtn">▶ CONTINUE</button>
-                    <button id="winRestartBtn">↺ RESTART</button>
-                </div>
+    <!-- Win screen (fixed overlay, outside canvas so it is never clipped) -->
+    <div id="winScreen" class="hidden">
+        <div id="winContent">
+            <div id="winTrophy">🏆</div>
+            <h2 id="winTitle">YOU WON!</h2>
+            <p id="winSubtitle">Score reached <strong id="winScoreDisplay">1000</strong></p>
+            <p id="winNextGoal">Next goal: <strong id="winNextDisplay">2000</strong></p>
+            <div id="winBonusInfo">Level up! Multipliers are now bigger 🚀</div>
+            <div id="winButtons">
+                <button id="continueBtn">▶ CONTINUE</button>
+                <button id="winRestartBtn">↺ RESTART</button>
             </div>
         </div>
-
     </div>
 
     <!-- All Seeing Eye: upcoming events sidebar -->
