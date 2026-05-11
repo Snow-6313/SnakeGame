@@ -28,8 +28,8 @@ No build step or server required.
 
 - **Eat** the orange food to grow and score points.
 - **Avoid** hitting walls or your own body.
-- Every **8 seconds** a random event fires, it can help or hurt you.
-- Reach the **score target** (default: 1 000 pts) to win a level and push on with a higher goal.
+- Every **8 seconds** a random event fires — it can help or hurt you.
+- Reach the **score target** (starts at 1,000 pts) to win a level and push on with a higher goal. Each subsequent target increases by 1,000 + 500 × (win level).
 
 ---
 
@@ -37,48 +37,51 @@ No build step or server required.
 
 ### Scoring System
 - **Base score** per food eaten, multiplied by your current length multiplier.
-- **Streak system**: consecutive eats without missing bump a streak counter; every 3 eats raises the streak multiplier.
-- **Win levels**: each continue scales the target and bonuses.
+- **Streak system**: consecutive eats build a streak counter; every 3 eats raises the streak multiplier by +0.5× (e.g. 6 eats = 2×, 9 eats = 2.5×).
+- **Length multiplier**: the longer your snake, the bigger the passive bonus. Shown on the green bar below the canvas.
+- **Win levels**: each continue scales the score target and multiplier tiers higher.
 
-### Random Events (54 total)
-Events fire every 8 seconds. A **pre-warning banner** and countdown bar give you advance notice for dangerous events. Events are drawn from a persistent **5-event queue** shown in the Upcoming panel.
+### Random Events (56 total)
+Events fire every 8 seconds. A **pre-warning banner** and countdown bar give you advance notice for dangerous events. Events are drawn from a persistent **5-event queue** shown in the Upcoming panel (unlocked via the 🔮 All Seeing Eye legendary event).
 
-| Rarity | Weight | Examples |
-|--------|--------|---------|
-| Common | 6× | Speed Boost, Slow Motion, Bonus Food, Score Drain |
-| Rare | 3× | Double Points, Food Frenzy, Reverse Controls, Moving Food |
-| Epic | 1× | Triple Points, Invincible, All Seeing Eye, Rewind |
-| Legendary | 8% flat | Golden Hour, Score Jackpot, Cosmic Jackpot (1% only) |
-| Mythic | Special | Cosmic Jackpot (once per session) |
+| Rarity | Count | Examples |
+|--------|-------|---------|
+| Common | 7 | Speed Boost, Slow Motion, Bonus Food, Loop Board, Teleport, Growth, Bigger Snake |
+| Rare | 17 | Double Points, Ghost Mode, Food Frenzy, Moving Food, Magnet, Score Drain, Reverse Controls, Wall Maze, Fake Food |
+| Epic | 20 | Triple Points, Invincible, Shrink, Score Multiplier ×5, All Seeing Eye, Rewind, Bomb Food, Chaos, Mirror Board, Gamble |
+| Legendary | 11 | Golden Hour, Score Jackpot, Full Send, Time Stop, Feast, God's Eye, Prismatic, Divine Trade, Gravity Flip, The Devil's Glare |
+| Mythic | 1 | Cosmic Jackpot (once per session, ~1% chance) |
 
 <details>
 <summary>Full event list</summary>
 
-Speed Boost · Slow Motion · Double Points · Bonus Food · Ghost Mode · Triple Points · Food Frenzy · Invincible · Shrink · Growth · Mini Snake · Bigger Snake · Score Drain · Score Growth · Reverse Controls · Expand Board · Shrink Board · Speed Trap · Blind · Teleport · Point Surge · Score Multiplier ×5 · Shuffle Food · Poison · Moving Food · Chaos · Swap Controls · Length Drain · Golden Hour · Score Jackpot · Full Send · Time Stop · Feast · Length Surge · Multiplier Freeze · Multiplier Boost · Magnet · Freeze Growth · Bomb Food · Dash · Mystery Box · Food Swap · Mirror Board · All Seeing Eye · Loop Board · Wall Maze · Fake Food · Ticking Time Bomb · Gamble · Rewind · Prismatic · Divine Trade · Gravity Flip · Cosmic Jackpot
+Speed Boost · Slow Motion · Double Points · Bonus Food · Ghost Mode · Triple Points · Food Frenzy · Invincible · Shrink · Growth · Mini Snake · Bigger Snake · Score Drain · Score Growth · Reverse Controls · Expand Board · Shrink Board · Speed Trap · Blind · Teleport · Point Surge · Score Multiplier ×5 · Shuffle Food · Poison · Moving Food · Chaos · Swap Controls · Length Drain · Golden Hour · Score Jackpot · Full Send · Time Stop · Feast · Length Surge · Multiplier Freeze · Multiplier Boost · Magnet · Freeze Growth · Bomb Food · Dash · Mystery Box · Food Swap · Mirror Board · All Seeing Eye · Loop Board · Wall Maze · Fake Food · Ticking Time Bomb · Gamble · Rewind · Prismatic · Divine Trade · Gravity Flip · God's Eye · The Devil's Glare · Cosmic Jackpot
 
 </details>
 
 ### Special Food Types
-- 🍎 **Bonus food**: extra score, temporary spawns.
-- 💣 **Bomb food**: eating it is painful; defuse the *Ticking Time Bomb* for +20 pts instead.
+- 🟠 **Regular food**: 10 pts base, always present.
+- ✨ **Bonus food**: 25 pts base, temporary spawns from events.
+- 💣 **Bomb food**: eating one costs 30 pts and 3 segments; defuse the *Ticking Time Bomb* variant for +20 pts instead.
 - ❓ **Mystery Box**: random reward on eat.
-- 👻 **Fake food**: plays a sound but gives nothing.
+- 🎭 **Fake food**: looks nearly identical to real food but gives nothing when eaten.
 
 ### God's Eye (in-game overlay)
-Pause the game mid-run and manually curate the next 5 events. Maximum 1 legendary per edit session.
+Pause the game mid-run and manually curate the next 5 events. Maximum 1 legendary per edit session. Optional invincibility while editing.
 
 ### Leaderboard
 - Persisted in `localStorage` (up to 50 entries).
-- Tracks: score, win level, food eaten, bonus eaten, bombs hit, events lived, snake length, and run duration.
+- Tracks: score, win level, food eaten, bonus eaten, bombs hit, events survived, snake length, and run duration.
 - Sortable by **Score** or **Date**.
 - Duplicate names keep only the best score.
+- Runs under 50 pts are auto-removed from the leaderboard after 30 seconds.
 
 ### Themes (10 presets)
 Switch visual themes from the title screen. Choice is saved across sessions.
 
 | Theme | Flavour |
 |-------|---------|
-| Classic | Deep blue, the default |
+| Classic | Deep blue — the default |
 | Neon | Cyberpunk cyan & pink |
 | Forest | Earthy greens |
 | Cosmic | Deep space purple |
@@ -91,11 +94,11 @@ Switch visual themes from the title screen. Choice is saved across sessions.
 
 ### Other Highlights
 - **rAF-based game loop** with smooth sub-tick interpolation for fluid snake movement.
-- **Spawn protection**: 5 seconds of invincibility + ghost mode after a win continue.
+- **Spawn protection**: 5 seconds of invincibility + ghost mode after a win-level continue.
 - **How to Play modal**: pauses the game while open.
 - **Hidden cheat code**: type `curtis67` after death to resume in-place with 5 s ghost mode.
 - **Low-score auto-cleanup**: runs under 50 pts are removed from the leaderboard after 30 s.
-- **Debug panel** (`?debug`): force any event, edit the leaderboard, and set your score on the fly.
+- **Debug panel** (`?debug`): force any event, edit the leaderboard, set your score, and import/export `localStorage` data.
 
 ---
 
@@ -107,7 +110,7 @@ SnakeGame/
 ├── style.css           # All styling & animations
 ├── js/
 │   ├── drawboard.js    # Renderer: canvas drawing, themes, interpolation
-│   ├── events.js       # All 54 event definitions (apply / remove logic)
+│   ├── events.js       # All 56 event definitions (apply / remove logic)
 │   └── game.js         # Game loop, scoring, leaderboard, UI wiring
 └── Sounds/
     ├── ding.mp3        # Food-eat sound effect
