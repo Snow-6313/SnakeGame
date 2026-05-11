@@ -1889,3 +1889,55 @@ h1,
     border: none;
     outline: none;
 }
+
+/* ── Footer bar ── */
+#footerBar {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    padding: 8px 0 4px;
+    margin-top: 4px;
+}
+
+#footerBar a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 18px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+#footerBar a svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+}
+
+#githubBtn {
+    background: rgba(255,255,255,0.07);
+    color: #ccc;
+    border: 1.5px solid rgba(255,255,255,0.2);
+}
+#githubBtn:hover {
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    border-color: rgba(255,255,255,0.45);
+}
+
+#feedbackBtn {
+    background: rgba(255,140,0,0.1);
+    color: #ff8c00;
+    border: 1.5px solid rgba(255,140,0,0.4);
+}
+#feedbackBtn:hover {
+    background: rgba(255,140,0,0.25);
+    color: #ffaa33;
+    border-color: rgba(255,140,0,0.75);
+}
