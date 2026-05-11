@@ -766,6 +766,7 @@ body:has(#titleScreen:not(.hidden)) #topBar span:first-child {
     cursor: pointer;
     border-left: 3px solid transparent;
     transition: background 0.1s;
+    -webkit-user-select: none;
     user-select: none;
 }
 .debug-item:hover { background: rgba(255,255,255,0.07); }
@@ -883,6 +884,7 @@ body:has(#titleScreen:not(.hidden)) #topBar span:first-child {
     padding: 4px 8px;
     border-left: 3px solid transparent;
     cursor: grab;
+    -webkit-user-select: none;
     user-select: none;
     transition: background 0.1s;
 }
@@ -952,6 +954,7 @@ body:has(#titleScreen:not(.hidden)) #topBar span:first-child {
     background: rgba(10,18,36,0.82);
     border: 1.5px solid #ff4422;
     pointer-events: none;
+    -webkit-backdrop-filter: blur(2px);
     backdrop-filter: blur(2px);
     animation: badgeFadeIn 0.2s ease both;
 }
@@ -1146,6 +1149,7 @@ button:hover {
     font-family: monospace;
     letter-spacing: 1px;
     pointer-events: none;
+    -webkit-user-select: none;
     user-select: none;
     z-index: 9999;
 }
@@ -1207,6 +1211,7 @@ button:hover {
     align-items: center;
     justify-content: center;
     padding: 16px;
+    -webkit-backdrop-filter: blur(3px);
     backdrop-filter: blur(3px);
     animation: helpFadeIn 0.2s ease both;
 }
@@ -1437,6 +1442,7 @@ button:hover {
     align-items: center;
     justify-content: center;
     padding: 16px;
+    -webkit-backdrop-filter: blur(4px);
     backdrop-filter: blur(4px);
     animation: helpFadeIn 0.2s ease both;
 }
@@ -1864,90 +1870,22 @@ h1,
 #debugFireNow:hover          { filter: brightness(0.9); }
 #debugFilter:focus           { border-color: var(--theme-accent, #ff8c00); }
 
-/* ── Additional theme overrides ── */
+/* Inline style replacements */
+.accent-color   { color: #ff8c00; }
+.color-helpful  { color: #4ec94e; }
+.color-harmful  { color: #ff5555; }
+.color-streak   { color: #ffcc00; }
+.rarity-chance  { opacity: 0.7; font-weight: 400; }
+.hidden-file-input { display: none; }
 
-/* Title screen overlay */
-#titleScreen {
-    background: color-mix(in srgb, var(--theme-bg, #0a1628) 93%, transparent);
+#cheatInput {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    width: 1px;
+    height: 1px;
+    top: 0;
+    left: 0;
+    border: none;
+    outline: none;
 }
-#titleScreen h1 { color: var(--theme-accent, #ff8c00); }
-
-/* Title screen name input */
-#playerNameInput {
-    border-color: color-mix(in srgb, var(--theme-accent, #ff8c00) 50%, transparent);
-    background: color-mix(in srgb, var(--theme-bg, #0a1628) 93%, transparent);
-}
-#playerNameInput:focus { border-color: var(--theme-accent, #ff8c00); }
-
-/* Global button fallback */
-button {
-    background: var(--theme-accent, #ff8c00);
-    color: var(--theme-bg, #0a1628);
-}
-button:hover { background: var(--theme-accent, #ff8c00); filter: brightness(0.9); }
-
-/* Bottom control buttons */
-#restartBtn, #howToPlayBtn, #lbBtn {
-    background: var(--theme-accent, #ff8c00);
-    color: var(--theme-bg, #0a1628);
-}
-#restartBtn:hover, #howToPlayBtn:hover, #lbBtn:hover {
-    filter: brightness(0.9);
-    background: var(--theme-accent, #ff8c00);
-}
-
-/* Event banner */
-#eventBanner { background: var(--theme-accent, #ff8c00); color: var(--theme-bg, #0a1628); }
-
-/* Upcoming events panel */
-#upcomingPanel {
-    background: color-mix(in srgb, var(--theme-bg, #0a1628) 93%, transparent);
-    border-color: var(--theme-accent, #9b59b6);
-}
-#upcomingTitle { color: color-mix(in srgb, var(--theme-accent, #ff8c00) 70%, #fff); }
-
-/* God's Eye header */
-#godsEyeHeader {
-    background: color-mix(in srgb, var(--theme-bg, #0a1628) 70%, var(--theme-accent, #9b59b6));
-    border-bottom-color: color-mix(in srgb, var(--theme-accent, #9b59b6) 30%, transparent);
-    color: color-mix(in srgb, var(--theme-accent, #ff8c00) 60%, #fff);
-}
-
-/* Win screen subtitle accent */
-#winSubtitle strong, #winNextGoal strong { color: var(--theme-accent, #ff8c00); }
-
-/* Restart prompt background */
-#restartPrompt {
-    background: color-mix(in srgb, var(--theme-bg, #0a1628) 95%, transparent);
-}
-
-/* Scrollbars */
-#debugList, #debugQueueList, #helpBody, #lbList {
-    scrollbar-color: var(--theme-accent, #ff8c00) transparent;
-}
-#debugList::-webkit-scrollbar-thumb,
-#debugQueueList::-webkit-scrollbar-thumb,
-#helpBody::-webkit-scrollbar-thumb,
-#lbList::-webkit-scrollbar-thumb { background: var(--theme-accent, #ff8c00); }
-
-/* Top bar labels */
-#topBar span:first-child { color: var(--theme-accent, #ff8c00); }
-#topBar strong           { color: var(--theme-accent, #ff8c00); }
-#scoreBoard strong       { color: var(--theme-accent, #ff8c00); }
-
-/* Help section headings */
-.help-section h3 {
-    color: var(--theme-accent, #ff8c00);
-    border-bottom-color: color-mix(in srgb, var(--theme-accent, #ff8c00) 20%, transparent);
-}
-
-/* Debug queue section */
-#debugQueueSection { border-top-color: color-mix(in srgb, var(--theme-accent, #ff8c00) 25%, transparent); }
-#debugQueueHeader  { background: color-mix(in srgb, var(--theme-accent, #ff8c00) 8%, transparent); }
-#debugQueueHeader span:first-child { color: var(--theme-accent, #ff8c00); }
-.debug-item:hover .debug-add-btn   { color: var(--theme-accent, #ff8c00); }
-.dq-btn:hover:not(:disabled)       { background: color-mix(in srgb, var(--theme-accent, #ff8c00) 30%, transparent); }
-
-/* Debug header border */
-#debugHeader { border-bottom-color: color-mix(in srgb, var(--theme-accent, #ff8c00) 25%, transparent); background: color-mix(in srgb, var(--theme-accent, #ff8c00) 12%, transparent); }
-#debugFilter:focus { border-color: var(--theme-accent, #ff8c00); }

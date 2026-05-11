@@ -48,8 +48,7 @@
         </div>
 
         <!-- Hidden cheat-code input (invisible, captures keystrokes after death) -->
-        <input id="cheatInput" type="text" autocomplete="off" spellcheck="false" tabindex="-1"
-               style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;top:0;left:0;border:none;outline:none;">
+        <input id="cheatInput" type="text" autocomplete="off" spellcheck="false" tabindex="-1" aria-label="Cheat code input">
 
     </div><!-- end #canvasWrapper -->
 
@@ -146,9 +145,9 @@
                     <ul>
                         <li><strong>Arrow Keys</strong> or <strong>WASD</strong> — Move the snake up, down, left, right</li>
                         <li>You <strong>cannot</strong> reverse direction — turning 180° instantly kills you!</li>
-                        <li>Eat the <strong style="color:#ff8c00">orange food</strong> to grow longer and earn points</li>
+                        <li>Eat the <strong class="accent-color">orange food</strong> to grow longer and earn points</li>
                         <li>Avoid hitting <strong>walls</strong> or your <strong>own body</strong> — both end the game</li>
-                        <li>Reach the <strong style="color:#ff8c00">score target</strong> shown at the top to win the level and progress</li>
+                        <li>Reach the <strong class="accent-color">score target</strong> shown at the top to win the level and progress</li>
                     </ul>
                 </section>
 
@@ -168,7 +167,7 @@
                 <section class="help-section">
                     <h3>🏆 Win Levels</h3>
                     <ul>
-                        <li>Each level has a <strong style="color:#ff8c00">score target</strong> (starts at 1000 pts). Hit it to win!</li>
+                        <li>Each level has a <strong class="accent-color">score target</strong> (starts at 1000 pts). Hit it to win!</li>
                         <li>After winning, you <strong>continue</strong> with a harder target and bigger multiplier tiers</li>
                         <li>Each win level makes the length multiplier scale faster and higher</li>
                     </ul>
@@ -176,7 +175,7 @@
 
                 <section class="help-section">
                     <h3>⚡ Events</h3>
-                    <p class="help-note">A random event fires every <strong>8 seconds</strong>. Events can be <span style="color:#4ec94e">helpful</span>, <span style="color:#ff5555">harmful</span>, or both! Harmful events always show a <strong>⚠️ warning countdown</strong> before they trigger so you can prepare.</p>
+                    <p class="help-note">A random event fires every <strong>8 seconds</strong>. Events can be <span class="color-helpful">helpful</span>, <span class="color-harmful">harmful</span>, or both! Harmful events always show a <strong>⚠️ warning countdown</strong> before they trigger so you can prepare.</p>
 
                     <div class="help-rarity-label common">Common</div>
                     <div class="help-event-list">
@@ -234,7 +233,7 @@
                         <div class="help-event">⏪ <strong>Rewind</strong> — Your snake body instantly snaps back to where it was ~3 seconds ago. Great escape if you're cornered!</div>
                     </div>
 
-                    <div class="help-rarity-label legendary">Legendary <span style="opacity:0.7;font-weight:400">(8% chance)</span></div>                    <div class="help-event-list">
+                    <div class="help-rarity-label legendary">Legendary <span class="rarity-chance">(8% chance)</span></div>                    <div class="help-event-list">
                         <div class="help-event legendary">👑 <strong>Golden Hour</strong> — ×10 points <em>plus</em> Ghost Mode <em>plus</em> Invincible all at once for 8s. The ultimate event!</div>
                         <div class="help-event legendary">💰 <strong>Score Jackpot</strong> — Instantly +200 points, no strings attached.</div>
                         <div class="help-event legendary">🔥 <strong>Full Send</strong> — Ultra fast speed + ×5 points + massive food storm for 8s. High risk, insane reward!</div>
@@ -248,7 +247,7 @@
                         <div class="help-event legendary harmful">🪐 <strong>Gravity Flip</strong> ⚠️ — All food slowly drifts upward every 0.6 seconds. Chase it before it wraps off the top!</div>
                     </div>
 
-                    <div class="help-rarity-label mythic">Mythic <span style="opacity:0.7;font-weight:400">(1% chance · once per session)</span></div>
+                    <div class="help-rarity-label mythic">Mythic <span class="rarity-chance">(1% chance · once per session)</span></div>
                     <div class="help-event-list">
                         <div class="help-event mythic">🌠 <strong>Cosmic Jackpot</strong> — An insanely rare event. Grants <strong>+2500 points</strong> instantly and triggers a full-screen rainbow celebration. Can only happen <em>once per game session</em>. If you see it, you're one of the lucky ones.</div>
                     </div>
@@ -257,7 +256,7 @@
                 <section class="help-section">
                     <h3>💡 Tips</h3>
                     <ul>
-                        <li>Build a <strong style="color:#ffcc00">streak</strong> by eating food consecutively — every 3 eats adds +0.5× to all points</li>
+                        <li>Build a <strong class="color-streak">streak</strong> by eating food consecutively — every 3 eats adds +0.5× to all points</li>
                         <li>Keep your snake <strong>long</strong> for a higher length multiplier — watch the 🐍 green bar fill up below the canvas</li>
                         <li>During <strong>⚠️ harmful event warnings</strong>, move to open space so you have room to react when it hits</li>
                         <li>Use <strong>Ghost Mode 👻</strong> aggressively — cut through your own body to reach food you normally couldn't</li>
@@ -323,7 +322,7 @@
                 <button id="debugImportBtn">⬇ Import</button>
             </div>
             <div id="debugStorageFeedback"></div>
-            <input id="debugImportFile" type="file" accept=".json" style="display:none">
+            <input id="debugImportFile" type="file" accept=".json" aria-label="Import JSON file" class="hidden-file-input">
         </div>
         <div id="debugSearch">
             <input id="debugFilter" type="text" placeholder="Filter events…" autocomplete="off" spellcheck="false">
