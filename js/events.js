@@ -518,6 +518,198 @@ const EVENTS = [
         rarity: 'mythic',
         apply: applyCosmicJackpot,
         remove: removeCosmicJackpot
+    },
+
+    // ══════════════════════════════════
+    // ──────── NEW EVENTS ───────────────
+    // ══════════════════════════════════
+
+    // ── COMMON ──
+    {
+        name: 'LUCKY CLOVER',
+        icon: '🍀',
+        duration: 0,
+        harmful: false,
+        rarity: 'common',
+        apply: applyLuckyClover,
+        remove: removeLuckyClover
+    },
+    {
+        name: 'FOOD RAIN',
+        icon: '🌧️',
+        duration: 5000,
+        harmful: false,
+        rarity: 'common',
+        apply: applyFoodRain,
+        remove: removeFoodRain
+    },
+    {
+        name: 'SCORE SEEP',
+        icon: '🕳️',
+        duration: 6000,
+        harmful: true,
+        rarity: 'common',
+        apply: applyScoreSeep,
+        remove: removeScoreSeep
+    },
+
+    // ── RARE ──
+    {
+        name: 'ANTIDOTE',
+        icon: '💉',
+        duration: 0,
+        harmful: false,
+        rarity: 'rare',
+        apply: applyAntidote,
+        remove: removeAntidote
+    },
+    {
+        name: 'ELIXIR',
+        icon: '🧪',
+        duration: 8000,
+        harmful: false,
+        rarity: 'rare',
+        apply: applyElixir,
+        remove: removeElixir
+    },
+    {
+        name: 'FLAT BONUS',
+        icon: '💵',
+        duration: 7000,
+        harmful: false,
+        rarity: 'rare',
+        apply: applyFlatBonus,
+        remove: removeFlatBonus
+    },
+    {
+        name: 'CARNIVAL',
+        icon: '🎡',
+        duration: 7000,
+        harmful: false,
+        rarity: 'rare',
+        apply: applyCarnival,
+        remove: removeCarnival
+    },
+    {
+        name: 'LEECH',
+        icon: '🩸',
+        duration: 6000,
+        harmful: true,
+        rarity: 'rare',
+        apply: applyLeech,
+        remove: removeLeech
+    },
+    {
+        name: 'MUDDY GROUND',
+        icon: '🟫',
+        duration: 6000,
+        harmful: true,
+        rarity: 'rare',
+        apply: applyMuddyGround,
+        remove: removeMuddyGround
+    },
+
+    // ── EPIC ──
+    {
+        name: 'OVERDRIVE',
+        icon: '🏎️',
+        duration: 5000,
+        harmful: false,
+        rarity: 'epic',
+        apply: applyOverdrive,
+        remove: removeOverdrive
+    },
+    {
+        name: 'ERUPTION',
+        icon: '🌋',
+        duration: 8000,
+        harmful: true,
+        rarity: 'epic',
+        apply: applyEruption,
+        remove: removeEruption
+    },
+    {
+        name: 'STREAK LOCK',
+        icon: '🔐',
+        duration: 6000,
+        harmful: false,
+        rarity: 'epic',
+        apply: applyStreakLock,
+        remove: removeStreakLock
+    },
+    {
+        name: 'TRIDENT',
+        icon: '🔱',
+        duration: 7000,
+        harmful: false,
+        rarity: 'epic',
+        apply: applyTrident,
+        remove: removeTrident
+    },
+    {
+        name: 'CORPSE WALK',
+        icon: '🧟',
+        duration: 5000,
+        harmful: true,
+        rarity: 'epic',
+        apply: applyCorpseWalk,
+        remove: removeCorpseWalk
+    },
+    {
+        name: 'SCORE FREEZE',
+        icon: '🥶',
+        duration: 5000,
+        harmful: true,
+        rarity: 'epic',
+        apply: applyScoreFreeze,
+        remove: removeScoreFreeze
+    },
+
+    // ── LEGENDARY ──
+    {
+        name: 'ECLIPSE',
+        icon: '🌒',
+        duration: 10000,
+        harmful: true,
+        rarity: 'legendary',
+        apply: applyEclipse,
+        remove: removeEclipse
+    },
+    {
+        name: 'ECHO',
+        icon: '🔊',
+        duration: 8000,
+        harmful: false,
+        rarity: 'legendary',
+        apply: applyEcho,
+        remove: removeEcho
+    },
+    {
+        name: 'NECROMANCER',
+        icon: '💀',
+        duration: 0,
+        harmful: false,
+        rarity: 'legendary',
+        apply: applyNecromancer,
+        remove: removeNecromancer
+    },
+    {
+        name: 'PLAGUE',
+        icon: '☣️',
+        duration: 8000,
+        harmful: true,
+        rarity: 'legendary',
+        apply: applyPlague,
+        remove: removePlague
+    },
+    {
+        name: 'WORMHOLE',
+        icon: '🌀',
+        duration: 10000,
+        harmful: false,
+        rarity: 'legendary',
+        apply: applyWormhole,
+        remove: removeWormhole
     }
 ]
 
@@ -1413,3 +1605,298 @@ function _showCosmicCelebration() {
 
     rafId = requestAnimationFrame(frame)
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ── NEW EVENT IMPLEMENTATIONS ─────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ── COMMON ──
+
+// LUCKY CLOVER — 3 green clover tiles appear. Eating one grants +30 pts and a tiny speed buff for 1.5s.
+function applyLuckyClover() {
+    Food.luckyClovers = []
+    for (let i = 0; i < 3; i++) Food.luckyClovers.push(Food._emptyAvoidFood())
+    setMessage('🍀 LUCKY CLOVER — 3 clovers on the board! Each is worth +30 pts!')
+}
+function removeLuckyClover() { Food.luckyClovers = [] }
+
+// FOOD RAIN — a new bonus food drops every 1.2s for 5s (up to 4 extra)
+let _foodRainInterval = null
+function applyFoodRain() {
+    setMessage('🌧️ FOOD RAIN — bonus food is raining down!')
+    clearInterval(_foodRainInterval)
+    let drops = 0
+    _foodRainInterval = setInterval(() => {
+        if (!gameRunning) { clearInterval(_foodRainInterval); return }
+        Food.placeBonus()
+        drops++
+        if (drops >= 4) { clearInterval(_foodRainInterval); _foodRainInterval = null }
+    }, 1200)
+}
+function removeFoodRain() {
+    clearInterval(_foodRainInterval); _foodRainInterval = null
+    Food.clearBonus()
+}
+
+// SCORE SEEP — score leaks 1 pt every 0.4 seconds (faster drain, smaller chunks)
+let _scoreSeepInterval = null
+function applyScoreSeep() {
+    clearInterval(_scoreSeepInterval)
+    _scoreSeepInterval = setInterval(() => {
+        if (!gameRunning) { clearInterval(_scoreSeepInterval); return }
+        score = Math.max(0, score - 1)
+        scoreDisplay.textContent = score
+        setMessage('🕳️ SCORE SEEP — your score is leaking!')
+    }, 400)
+}
+function removeScoreSeep() { clearInterval(_scoreSeepInterval); _scoreSeepInterval = null }
+
+// ── RARE ──
+
+// ANTIDOTE — instantly clears all active negative effects and resets speed to normal
+function applyAntidote() {
+    // Cancel any ongoing harmful intervals
+    clearInterval(drainInterval)
+    clearInterval(poisonInterval)
+    if (typeof _scoreSeepInterval !== 'undefined') { clearInterval(_scoreSeepInterval); _scoreSeepInterval = null }
+    if (typeof _leechInterval !== 'undefined') { clearInterval(_leechInterval); _leechInterval = null }
+    Snake.reversedControls = false
+    Snake.swappedControls  = false
+    Snake.multFrozen       = false
+    Snake.mirrorBoard      = false
+    if (currentSpeed < speedNormal) currentSpeed = speedNormal
+    Food.bombs       = []
+    Food.fakeFoods   = []
+    Food.eruptionTiles = []
+    Renderer.blindMode = false
+    setMessage('💉 ANTIDOTE — all negative effects cleared!')
+    if (gameRunning) Renderer.flashBorder('#00ff88', 3)
+}
+function removeAntidote() {}
+
+// ELIXIR — temporarily gives ghost mode + doubles streak multiplier for 8s
+function applyElixir() {
+    Snake.ghostMode = true
+    Snake.elixirActive = true
+    setMessage('🧪 ELIXIR — Ghost Mode + double streak for 8s!')
+}
+function removeElixir() {
+    Snake.ghostMode = false
+    Snake.elixirActive = false
+}
+
+// FLAT BONUS — every food eaten gives an extra flat +15 pts on top of all multipliers for 7s
+function applyFlatBonus() {
+    Snake.flatBonus = 15
+    setMessage('💵 FLAT BONUS — +15 bonus pts on every food for 7s!')
+}
+function removeFlatBonus() { Snake.flatBonus = 0 }
+
+// CARNIVAL — score multiplier randomly bounces between 1x–4x every 1.5s for 7s
+let _carnivalInterval = null
+function applyCarnival() {
+    setMessage('🎡 CARNIVAL — multiplier is spinning like a wheel!')
+    clearInterval(_carnivalInterval)
+    _carnivalInterval = setInterval(() => {
+        if (!gameRunning) { clearInterval(_carnivalInterval); return }
+        const opts = [1, 1.5, 2, 2.5, 3, 4]
+        pointMult = opts[Math.floor(Math.random() * opts.length)]
+        setMessage(`🎡 CARNIVAL — spin! Now at ${pointMult}×!`)
+    }, 1500)
+}
+function removeCarnival() {
+    clearInterval(_carnivalInterval); _carnivalInterval = null
+    pointMult = 1
+}
+
+// LEECH — your current streak is drained 1 count per second (makes streak building harder)
+let _leechInterval = null
+function applyLeech() {
+    setMessage('🩸 LEECH — your streak is being drained!')
+    clearInterval(_leechInterval)
+    _leechInterval = setInterval(() => {
+        if (!gameRunning) { clearInterval(_leechInterval); return }
+        if (foodStreak > 0) {
+            foodStreak = Math.max(0, foodStreak - 1)
+            streakMult = 1 + Math.floor(foodStreak / 3) * 0.5
+            if (foodStreak >= 3) {
+                streakCountEl.textContent = foodStreak
+                streakMultEl.textContent  = streakMult.toFixed(1) + 'x'
+            } else {
+                streakDisplay.classList.add('hidden')
+            }
+        }
+    }, 1000)
+}
+function removeLeech() { clearInterval(_leechInterval); _leechInterval = null }
+
+// MUDDY GROUND — moves snake at 70% of normal speed AND disables input queue (only 1 dir change buffered)
+function applyMuddyGround() {
+    currentSpeed = Math.round(speedNormal * 1.65)
+    Snake.muddyGround = true
+    setMessage('🟫 MUDDY GROUND — everything is slower, movement is sluggish!')
+}
+function removeMuddyGround() {
+    if (gameRunning) currentSpeed = speedNormal
+    Snake.muddyGround = false
+}
+
+// ── EPIC ──
+
+// OVERDRIVE — speed increases every second until insane; multiplier scales up too
+let _overdriveInterval = null
+let _overdriveStack = 0
+function applyOverdrive() {
+    _overdriveStack = 0
+    setMessage('🏎️ OVERDRIVE — speed ramping up each second! Score too!')
+    clearInterval(_overdriveInterval)
+    _overdriveInterval = setInterval(() => {
+        if (!gameRunning) { clearInterval(_overdriveInterval); return }
+        _overdriveStack = Math.min(_overdriveStack + 1, 5)
+        currentSpeed = Math.max(50, speedNormal - _overdriveStack * 18)
+        pointMult    = 1 + _overdriveStack * 0.5
+        setMessage(`🏎️ OVERDRIVE — speed level ${_overdriveStack}, ${pointMult.toFixed(1)}× pts!`)
+    }, 1000)
+}
+function removeOverdrive() {
+    clearInterval(_overdriveInterval); _overdriveInterval = null
+    _overdriveStack = 0
+    if (gameRunning) currentSpeed = speedNormal
+    pointMult = 1
+}
+
+// ERUPTION — 10 lava wall tiles are scattered on the board; touching one = instant death
+let _eruptionTiles = []
+function applyEruption() {
+    _eruptionTiles = []
+    const occupied = new Set(Snake.body.map(s => `${s.x},${s.y}`))
+    occupied.add(`${Food.main.x},${Food.main.y}`)
+    for (let i = 0; i < 10; i++) {
+        let x, y, tries = 0
+        do { x = Math.floor(Math.random() * Cols); y = Math.floor(Math.random() * Rows); tries++ }
+        while (occupied.has(`${x},${y}`) && tries < 300)
+        occupied.add(`${x},${y}`)
+        _eruptionTiles.push({ x, y })
+    }
+    Food.eruptionTiles = _eruptionTiles
+    setMessage('🌋 ERUPTION — 10 lava tiles scattered! Avoid them or die!')
+}
+function removeEruption() {
+    _eruptionTiles = []
+    Food.eruptionTiles = []
+    setMessage('🌋 ERUPTION cooled down.')
+}
+
+// STREAK LOCK — freezes your current streak counter so it cannot reset for 6s
+function applyStreakLock() {
+    Snake.streakFrozen = true
+    setMessage('🔐 STREAK LOCK — your streak is locked in, it can\'t reset!')
+}
+function removeStreakLock() { Snake.streakFrozen = false }
+
+// TRIDENT — eating food spawns 2 extra bonus foods instantly (triple harvest for 7s)
+function applyTrident() {
+    Snake.tridentActive = true
+    setMessage('🔱 TRIDENT — every food you eat spawns 2 extra bonus tiles!')
+}
+function removeTrident() { Snake.tridentActive = false }
+
+// CORPSE WALK — dead segments re-appear as hazard walls at random positions every 1.5s
+let _corpseInterval = null
+function applyCorpseWalk() {
+    setMessage('🧟 CORPSE WALK — ghost segments haunt the board!')
+    // Hazard tiles are rendered as fake food (slightly different colour via fakeFoods array)
+    clearInterval(_corpseInterval)
+    let spawned = 0
+    _corpseInterval = setInterval(() => {
+        if (!gameRunning) { clearInterval(_corpseInterval); return }
+        if (spawned < 6) {
+            const t = Food._emptyAvoidFood()
+            Food.fakeFoods.push(t)   // reuse fakeFoods as ghost hazard tiles
+            spawned++
+        }
+    }, 1500)
+}
+function removeCorpseWalk() {
+    clearInterval(_corpseInterval); _corpseInterval = null
+    Food.fakeFoods = []
+}
+
+// SCORE FREEZE — all score gains are nullified for 5s (eating food gives 0 pts but still grows)
+function applyScoreFreeze() {
+    Snake.scoreFrozen = true
+    setMessage('🥶 SCORE FREEZE — no points can be earned for 5s!')
+}
+function removeScoreFreeze() { Snake.scoreFrozen = false }
+
+// ── LEGENDARY ──
+
+// ECLIPSE — near-total darkness AND wall-loop disabled AND all bonus food removed for 10s
+function applyEclipse() {
+    Renderer.blindMode = true
+    Snake.loopBoard    = false
+    Food.clearBonus()
+    Food.luckyClovers  = []
+    setMessage('🌒 ECLIPSE — darkness falls. No help, no escape!')
+    if (gameRunning) Renderer.flashBorder('#220000', 3)
+}
+function removeEclipse() {
+    Renderer.blindMode = false
+    setMessage('🌒 ECLIPSE ended — light returns.')
+}
+
+// ECHO — food appears twice (ghost copy a few tiles away worth 50% pts). Both are real.
+function applyEcho() {
+    Snake.echoActive = true
+    setMessage('🔊 ECHO — food has a ghost echo copy! Both are real!')
+}
+function removeEcho() { Snake.echoActive = false }
+
+// NECROMANCER — revives the last 5 segments that were lost (re-attaches them to the tail)
+function applyNecromancer() {
+    const regrow = Math.min(5, 15 - Snake.body.length + 5)
+    const tail = Snake.body[Snake.body.length - 1]
+    for (let i = 0; i < regrow; i++) Snake.body.push({ ...tail })
+    score += 30
+    scoreDisplay.textContent = score
+    if (score > highScore) { highScore = score; highScoreDisplay.textContent = highScore; localStorage.setItem('snakeHighScore', highScore) }
+    setMessage('💀 NECROMANCER — lost segments restored + 30 pts!')
+    if (gameRunning) Renderer.flashBorder('#8800ff', 4)
+}
+function removeNecromancer() {}
+
+// PLAGUE — food gradually vanishes (bonus food is removed 1-by-1 every 0.8s) AND score drains 5/s
+let _plagueInterval = null
+function applyPlague() {
+    setMessage('☣️ PLAGUE — your food is rotting and score is decaying!')
+    clearInterval(_plagueInterval)
+    _plagueInterval = setInterval(() => {
+        if (!gameRunning) { clearInterval(_plagueInterval); return }
+        if (Food.bonus.length > 0) Food.bonus.pop()
+        score = Math.max(0, score - 5)
+        scoreDisplay.textContent = score
+    }, 800)
+}
+function removePlague() {
+    clearInterval(_plagueInterval); _plagueInterval = null
+    setMessage('☣️ PLAGUE lifted.')
+}
+
+// WORMHOLE — every 2.5s while active, eating food randomly teleports the snake's head to a new safe tile (keeps momentum)
+let _wormholeInterval = null
+function applyWormhole() {
+    Snake.wormholeActive = true
+    setMessage('🌀 WORMHOLE — eating food now teleports your head!')
+    clearInterval(_wormholeInterval)
+    _wormholeInterval = setInterval(() => {
+        if (!gameRunning) { clearInterval(_wormholeInterval); return }
+        // Ripple effect on board borders
+        if (gameRunning) Renderer.flashBorder('#4400ff', 1)
+    }, 2500)
+}
+function removeWormhole() {
+    clearInterval(_wormholeInterval); _wormholeInterval = null
+    Snake.wormholeActive = false
+    setMessage('🌀 WORMHOLE closed.')
+}
+

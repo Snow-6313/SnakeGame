@@ -79,6 +79,7 @@ function updateLengthMultBar() {
 
 // Stacks all multipliers, updates score + high score
 function addScore(base) {
+    if (Snake.scoreFrozen) return 0
     const lengthMult = getLengthMult()
     // Prismatic: random surprise multiplier (0.5x – 8x) each eat
     const prismMult = Snake.prismatic ? (0.5 + Math.random() * 7.5) : 1
@@ -90,7 +91,7 @@ function addScore(base) {
             if (gameRunning && Snake.prismatic) setMessage('🌈 Prismatic ' + prismLabel + '!')
         }, 0)
     }
-    let pts = Math.round(base * pointMult * streakMult * lengthMult * prismMult)
+    let pts = Math.round(base * pointMult * (Snake.elixirActive ? streakMult * 2 : streakMult) * lengthMult * prismMult)
     score += pts
     scoreDisplay.textContent = score
     if (score > highScore) { highScore = score; highScoreDisplay.textContent = highScore; localStorage.setItem('snakeHighScore', highScore) }
@@ -277,9 +278,13 @@ function startGame() {
     Cols = 20; Rows = 20
     Snake.init()
     Food.clearBonus(); Food.place()
-    Food.mazeTiles  = []
-    Food.fakeFoods  = []
-    Food.tickingBomb = null
+    Food.mazeTiles     = []
+    Food.fakeFoods     = []
+    Food.tickingBomb   = null
+    Food.eruptionTiles = []
+    Food.luckyClovers  = []
+    Food.bombs         = []
+    Food.mysteryBox    = null
     Renderer.blindMode = false
     Renderer.resizeCanvas()
     resetScore()
@@ -335,20 +340,67 @@ function gameTick() {
         onEat()
         const lm = getLengthMult()
         const lmTag = lm > 1 ? ` (🐍x${lm.toFixed(2)})` : ''
-        setMessage('+' + addScore(10) + ' points!' + lmTag)
+        if (!Snake.scoreFrozen) {
+            const baseScore = 10 + (Snake.flatBonus || 0)
+            setMessage('+' + addScore(baseScore) + ' points!' + lmTag)
+        } else {
+            setMessage('🥶 SCORE FREEZE — no points! (🐍 grows)' + lmTag)
+        }
         Food.place(); playEatSound(); ate = true
         statFoodEaten++
-        if (Snake.frozenGrowth) Snake.removeTail()  // cancel the growth
+        if (Snake.frozenGrowth) Snake.removeTail()
+        // Trident — spawn 2 extra bonus tiles
+        if (Snake.tridentActive) { Food.placeBonus(); Food.placeBonus() }
+        // Wormhole — teleport head to a safe tile after eating
+        if (Snake.wormholeActive) {
+            const dest = pickTeleportDest()
+            Snake.body[0].x = dest.x; Snake.body[0].y = dest.y
+            setMessage('🌀 WORMHOLE teleport!')
+        }
     }
 
     for (let i = Food.bonus.length - 1; i >= 0; i--) {
         if (head.x === Food.bonus[i].x && head.y === Food.bonus[i].y) {
             const lm = getLengthMult()
             const lmTag = lm > 1 ? ` (🐍x${lm.toFixed(2)})` : ''
-            setMessage('+' + addScore(25) + ' BONUS points!' + lmTag)
+            if (!Snake.scoreFrozen) {
+                const baseBonus = 25 + (Snake.flatBonus || 0)
+                setMessage('+' + addScore(baseBonus) + ' BONUS points!' + lmTag)
+            } else {
+                setMessage('🥶 SCORE FREEZE — no bonus pts!')
+            }
             Food.bonus.splice(i, 1); playEatSound(); ate = true
             statBonusEaten++
             if (Snake.frozenGrowth) Snake.removeTail()
+            if (Snake.tridentActive) { Food.placeBonus(); Food.placeBonus() }
+        }
+    }
+
+    // Lucky clover — eating one gives +30 pts and a brief speed buff
+    for (let i = (Food.luckyClovers || []).length - 1; i >= 0; i--) {
+        if (head.x === Food.luckyClovers[i].x && head.y === Food.luckyClovers[i].y) {
+            Food.luckyClovers.splice(i, 1)
+            playEatSound()
+            const pts = Snake.scoreFrozen ? 0 : addScore(30)
+            setMessage('🍀 LUCKY CLOVER — ' + (pts > 0 ? '+' + pts + ' pts!' : 'frozen!'))
+            // Brief speed boost for 1.5s
+            const prevSpeed = currentSpeed
+            currentSpeed = Math.max(60, currentSpeed - 30)
+            setTimeout(() => { if (gameRunning) currentSpeed = prevSpeed }, 1500)
+            ate = true
+            if (Snake.frozenGrowth) Snake.removeTail()
+        }
+    }
+
+    // Echo food — ghost copy of main food worth 50% pts
+    if (Snake.echoActive && Food.main) {
+        const echoX = (Food.main.x + 3) % Cols
+        const echoY = (Food.main.y + 3) % Rows
+        if (head.x === echoX && head.y === echoY) {
+            playEatSound()
+            const pts = Snake.scoreFrozen ? 0 : addScore(5)
+            setMessage('🔊 ECHO — ghost food! +' + pts + ' pts')
+            ate = true
         }
     }
 
@@ -425,7 +477,10 @@ function gameTick() {
         ate = true
     }
 
-    if (!ate) { onMiss(); Snake.removeTail() }
+    if (!ate) {
+        if (!Snake.streakFrozen) onMiss()
+        Snake.removeTail()
+    }
 
     updateLengthMultBar()
     // Drawing is handled by the rAF loop for smooth interpolation
@@ -798,6 +853,25 @@ function cancelActiveEvent() {
     Food.mazeTiles         = []
     Food.fakeFoods         = []
     Food.tickingBomb       = null
+    Food.eruptionTiles     = []
+    Food.luckyClovers      = []
+    Snake.tridentActive    = false
+    Snake.echoActive       = false
+    Snake.streakFrozen     = false
+    Snake.flatBonus        = 0
+    Snake.muddyGround      = false
+    Snake.elixirActive     = false
+    Snake.scoreFrozen      = false
+    Snake.wormholeActive   = false
+    // New event intervals
+    if (typeof _foodRainInterval  !== 'undefined' && _foodRainInterval)  { clearInterval(_foodRainInterval);  _foodRainInterval  = null }
+    if (typeof _scoreSeepInterval !== 'undefined' && _scoreSeepInterval) { clearInterval(_scoreSeepInterval); _scoreSeepInterval = null }
+    if (typeof _carnivalInterval  !== 'undefined' && _carnivalInterval)  { clearInterval(_carnivalInterval);  _carnivalInterval  = null }
+    if (typeof _leechInterval     !== 'undefined' && _leechInterval)     { clearInterval(_leechInterval);     _leechInterval     = null }
+    if (typeof _overdriveInterval !== 'undefined' && _overdriveInterval) { clearInterval(_overdriveInterval); _overdriveInterval = null }
+    if (typeof _corpseInterval    !== 'undefined' && _corpseInterval)    { clearInterval(_corpseInterval);    _corpseInterval    = null }
+    if (typeof _plagueInterval    !== 'undefined' && _plagueInterval)    { clearInterval(_plagueInterval);    _plagueInterval    = null }
+    if (typeof _wormholeInterval  !== 'undefined' && _wormholeInterval)  { clearInterval(_wormholeInterval);  _wormholeInterval  = null }
     lengthMultFill.classList.remove('drained')
     Renderer.blindMode   = false
     Food.clearBonus()
@@ -821,6 +895,14 @@ function endGame() {
     if (typeof _gravityInterval !== 'undefined' && _gravityInterval) { clearInterval(_gravityInterval); _gravityInterval = null }
     if (typeof _devilsGlareTimeout !== 'undefined' && _devilsGlareTimeout) { clearTimeout(_devilsGlareTimeout); _devilsGlareTimeout = null }
     if (typeof _tickingBombTimeout !== 'undefined' && _tickingBombTimeout) { clearTimeout(_tickingBombTimeout); _tickingBombTimeout = null }
+    if (typeof _foodRainInterval  !== 'undefined' && _foodRainInterval)  { clearInterval(_foodRainInterval);  _foodRainInterval  = null }
+    if (typeof _scoreSeepInterval !== 'undefined' && _scoreSeepInterval) { clearInterval(_scoreSeepInterval); _scoreSeepInterval = null }
+    if (typeof _carnivalInterval  !== 'undefined' && _carnivalInterval)  { clearInterval(_carnivalInterval);  _carnivalInterval  = null }
+    if (typeof _leechInterval     !== 'undefined' && _leechInterval)     { clearInterval(_leechInterval);     _leechInterval     = null }
+    if (typeof _overdriveInterval !== 'undefined' && _overdriveInterval) { clearInterval(_overdriveInterval); _overdriveInterval = null }
+    if (typeof _corpseInterval    !== 'undefined' && _corpseInterval)    { clearInterval(_corpseInterval);    _corpseInterval    = null }
+    if (typeof _plagueInterval    !== 'undefined' && _plagueInterval)    { clearInterval(_plagueInterval);    _plagueInterval    = null }
+    if (typeof _wormholeInterval  !== 'undefined' && _wormholeInterval)  { clearInterval(_wormholeInterval);  _wormholeInterval  = null }
     if (activeEvent) { try { activeEvent.remove() } catch(e) {} }
     activeEvent = null; hideEventBanner(); gameLoop = null
     stopMusic()

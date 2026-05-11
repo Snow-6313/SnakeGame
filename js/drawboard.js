@@ -16,6 +16,10 @@ const Snake = {
     loopBoard: false,
     prismatic: false,
     gravityFlip: false,
+    tridentActive: false,
+    echoActive: false,
+    streakFrozen: false,
+    flatBonus: 0,
 
     init() {
         this.body = [{ x: 10, y: 10 }, { x: 9, y: 10 }, { x: 8, y: 10 }]
@@ -33,6 +37,10 @@ const Snake = {
         this.loopBoard = false
         this.prismatic = false
         this.gravityFlip = false
+        this.tridentActive = false
+        this.echoActive    = false
+        this.streakFrozen  = false
+        this.flatBonus     = 0
     },
 
     // returns { moved, head }, { hitWall }, or { hitSelf }
@@ -62,6 +70,12 @@ const Snake = {
                 return { hitWall: true }
         }
 
+        // Eruption tiles act as walls (checked before self-collision)
+        if (!this.invincible && !this.ghostMode && typeof Food !== 'undefined' && Food.eruptionTiles) {
+            if (Food.eruptionTiles.some(t => t.x === head.x && t.y === head.y))
+                return { hitWall: true }
+        }
+
         if (!this.invincible && !this.ghostMode) {
             for (let i = 1; i < this.body.length; i++)
                 if (this.body[i].x === head.x && this.body[i].y === head.y)
@@ -74,7 +88,51 @@ const Snake = {
 
     removeTail()     { this.body.pop() },
     cutToLength(len) { this.body = this.body.slice(0, Math.max(len, 3)) },
-    clampToBoard()   { this.body = this.body.filter(s => s.x < Cols && s.y < Rows) }
+    clampToBoard()   { this.body = this.body.filter(s => s.x < Cols && s.y < Rows) },
+
+    _empty() {
+        let fx, fy, found = false
+        while (!found) {
+            fx = Math.floor(Math.random() * Cols)
+            fy = Math.floor(Math.random() * Rows)
+            found = !Snake.body.some(s => s.x === fx && s.y === fy)
+        }
+        // Mirror board: reflect across the board centre
+        if (Snake.mirrorBoard) {
+            fx = Cols - 1 - fx
+            fy = Rows - 1 - fy
+        }
+        return { x: fx, y: fy }
+    },
+
+    // Like _empty() but also avoids all existing food tiles (for placing bombs/specials)
+    _emptyAvoidFood() {
+        const occupied = new Set()
+        // Mark main food
+        occupied.add(`${this.main.x},${this.main.y}`)
+        // Mark bonus foods
+        for (const b of this.bonus) occupied.add(`${b.x},${b.y}`)
+        // Mark mystery box
+        if (this.mysteryBox) occupied.add(`${this.mysteryBox.x},${this.mysteryBox.y}`)
+        // Mark existing bombs
+        for (const b of this.bombs) occupied.add(`${b.x},${b.y}`)
+
+        let fx, fy, attempts = 0
+        do {
+            fx = Math.floor(Math.random() * Cols)
+            fy = Math.floor(Math.random() * Rows)
+            attempts++
+            if (attempts > 500) break   // board too full, give up
+        } while (
+            Snake.body.some(s => s.x === fx && s.y === fy) ||
+            occupied.has(`${fx},${fy}`)
+        )
+        if (Snake.mirrorBoard) {
+            fx = Cols - 1 - fx
+            fy = Rows - 1 - fy
+        }
+        return { x: fx, y: fy }
+    }
 }
 
 // --- FOOD ---
@@ -87,6 +145,8 @@ const Food = {
     mazeTiles: [],    // wall maze tiles (WALL MAZE event)
     fakeFoods: [],    // decoy food tiles (FAKE FOOD event)
     tickingBomb: null,// { x, y, spawnTime, duration } (TICKING TIME BOMB event)
+    eruptionTiles: [], // eruption tile walls (ERUPTION event)
+    luckyClovers: [],  // lucky clover collectibles (LUCKY CLOVER event)
 
     place()      { this.main = this._empty() },
     placeBonus() { this.bonus.push(this._empty()) },
@@ -101,6 +161,8 @@ const Food = {
         this.mazeTiles  = (this.mazeTiles  || []).filter(b => b.x < Cols && b.y < Rows)
         this.fakeFoods  = (this.fakeFoods  || []).filter(b => b.x < Cols && b.y < Rows)
         if (this.tickingBomb && (this.tickingBomb.x >= Cols || this.tickingBomb.y >= Rows)) this.tickingBomb = null
+        this.eruptionTiles = (this.eruptionTiles || []).filter(b => b.x < Cols && b.y < Rows)
+        this.luckyClovers  = (this.luckyClovers  || []).filter(b => b.x < Cols && b.y < Rows)
     },
 
     _empty() {
@@ -383,6 +445,56 @@ const Renderer = {
             this.ctx.fillText('?', cx + 1, cy + 1)
             this.ctx.fillStyle = '#fff'
             this.ctx.fillText('?', cx, cy)
+            this.ctx.restore()
+        }
+
+        // ── Eruption tiles — glowing lava walls ──
+        const erupPulse = 0.6 + 0.4 * Math.sin(Date.now() / 150)
+        for (const t of (Food.eruptionTiles || [])) {
+            const ex = t.x * tile, ey = t.y * tile
+            this.ctx.save()
+            this.ctx.fillStyle = `rgba(200,40,0,${erupPulse})`
+            this.ctx.fillRect(ex, ey, tile, tile)
+            this.ctx.strokeStyle = `rgba(255,140,0,${erupPulse})`
+            this.ctx.lineWidth = 2
+            this.ctx.strokeRect(ex + 1, ey + 1, tile - 2, tile - 2)
+            this.ctx.font = `${Math.round(tile * 0.55)}px serif`
+            this.ctx.textAlign = 'center'
+            this.ctx.textBaseline = 'middle'
+            this.ctx.globalAlpha = erupPulse
+            this.ctx.fillText('🌋', ex + tile / 2, ey + tile / 2)
+            this.ctx.globalAlpha = 1
+            this.ctx.restore()
+        }
+
+        // ── Lucky Clover tiles — green glowing collectibles ──
+        const cloverPulse = 0.7 + 0.3 * Math.sin(Date.now() / 300)
+        for (const c of (Food.luckyClovers || [])) {
+            const cx2 = c.x * tile, cy2 = c.y * tile
+            this.ctx.save()
+            this.ctx.fillStyle = `rgba(0,180,60,${cloverPulse * 0.5})`
+            this.ctx.fillRect(cx2 + 1, cy2 + 1, tile - 2, tile - 2)
+            this.ctx.strokeStyle = `rgba(0,255,80,${cloverPulse})`
+            this.ctx.lineWidth = 1.5
+            this.ctx.strokeRect(cx2 + 2, cy2 + 2, tile - 4, tile - 4)
+            this.ctx.font = `${Math.round(tile * 0.55)}px serif`
+            this.ctx.textAlign = 'center'
+            this.ctx.textBaseline = 'middle'
+            this.ctx.globalAlpha = cloverPulse
+            this.ctx.fillText('🍀', cx2 + tile / 2, cy2 + tile / 2)
+            this.ctx.globalAlpha = 1
+            this.ctx.restore()
+        }
+
+        // ── Echo ghost food — semi-transparent double of real food ──
+        if (Snake.echoActive && Food.main) {
+            const echoX = (Food.main.x + 3) % Cols
+            const echoY = (Food.main.y + 3) % Rows
+            this.ctx.save()
+            this.ctx.globalAlpha = 0.35 + 0.15 * Math.sin(Date.now() / 250)
+            this.ctx.fillStyle = this.theme.food
+            this.ctx.fillRect(echoX * tile + 3, echoY * tile + 3, tile - 6, tile - 6)
+            this.ctx.globalAlpha = 1
             this.ctx.restore()
         }
     },
