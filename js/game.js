@@ -122,11 +122,28 @@ function resetScore() {
     lengthMultValue.textContent = '1.00x'
 }
 
-// input — buffers direction changes, supports SWAP/REVERSE CONTROLS events
+// input — buffers direction changes into Snake.inputQueue (max 3), supports SWAP/REVERSE CONTROLS
 document.addEventListener('keydown', (e) => {
     if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) e.preventDefault()
+
+    // Sprint (Shift key)
+    if (e.key === 'Shift' && gameRunning && !Snake.sprinting) {
+        Snake.sprinting = true
+        _sprintActive = true
+        if (!_sprintDrainInterval) {
+            _sprintDrainInterval = setInterval(() => {
+                if (!gameRunning || !Snake.sprinting) { clearInterval(_sprintDrainInterval); _sprintDrainInterval = null; return }
+                if (score > 0) {
+                    score = Math.max(0, score - 2)
+                    scoreDisplay.textContent = score
+                }
+            }, 300)
+        }
+        _applySprint()
+        return
+    }
+
     if (!gameRunning) return   // blocked when paused, game over, or help open
-    let d = Snake.direction
     let key = e.key
 
     // Normalise WASD → Arrow equivalent
@@ -142,18 +159,59 @@ document.addEventListener('keydown', (e) => {
         else if (key === 'ArrowRight') key = 'ArrowLeft'
     }
 
+    let mapped = null
     if (Snake.reversedControls) {
-        if (key === 'ArrowUp'    && d !== 'UP')    Snake.nextDirection = 'DOWN'
-        if (key === 'ArrowDown'  && d !== 'DOWN')  Snake.nextDirection = 'UP'
-        if (key === 'ArrowLeft'  && d !== 'LEFT')  Snake.nextDirection = 'RIGHT'
-        if (key === 'ArrowRight' && d !== 'RIGHT') Snake.nextDirection = 'LEFT'
+        if (key === 'ArrowUp')    mapped = 'DOWN'
+        else if (key === 'ArrowDown')  mapped = 'UP'
+        else if (key === 'ArrowLeft')  mapped = 'RIGHT'
+        else if (key === 'ArrowRight') mapped = 'LEFT'
     } else {
-        if (key === 'ArrowUp'    && d !== 'DOWN')  Snake.nextDirection = 'UP'
-        if (key === 'ArrowDown'  && d !== 'UP')    Snake.nextDirection = 'DOWN'
-        if (key === 'ArrowLeft'  && d !== 'RIGHT') Snake.nextDirection = 'LEFT'
-        if (key === 'ArrowRight' && d !== 'LEFT')  Snake.nextDirection = 'RIGHT'
+        if (key === 'ArrowUp')    mapped = 'UP'
+        else if (key === 'ArrowDown')  mapped = 'DOWN'
+        else if (key === 'ArrowLeft')  mapped = 'LEFT'
+        else if (key === 'ArrowRight') mapped = 'RIGHT'
+    }
+
+    if (mapped) {
+        // Don't queue duplicates or 180° flips from the last queued dir
+        const lastQueued = Snake.inputQueue.length > 0
+            ? Snake.inputQueue[Snake.inputQueue.length - 1]
+            : Snake.direction
+        const opposites = { UP:'DOWN', DOWN:'UP', LEFT:'RIGHT', RIGHT:'LEFT' }
+        if (mapped !== lastQueued && mapped !== opposites[lastQueued]) {
+            if (Snake.inputQueue.length < 3) Snake.inputQueue.push(mapped)
+        }
     }
 })
+
+document.addEventListener('keyup', (e) => {
+    if (e.key === 'Shift') {
+        Snake.sprinting = false
+        _sprintActive = false
+        clearInterval(_sprintDrainInterval); _sprintDrainInterval = null
+        _removeSprint()
+    }
+})
+
+let _sprintActive = false
+let _sprintDrainInterval = null
+let _sprintBaseSpeed = null
+
+function _applySprint() {
+    if (!gameRunning) return
+    _sprintBaseSpeed = currentSpeed
+    currentSpeed = Math.max(45, Math.round(currentSpeed * 0.45))
+    const badge = document.getElementById('sprintBadge')
+    if (badge) badge.classList.add('active')
+}
+function _removeSprint() {
+    if (_sprintBaseSpeed !== null) {
+        currentSpeed = _sprintBaseSpeed
+        _sprintBaseSpeed = null
+    }
+    const badge = document.getElementById('sprintBadge')
+    if (badge) badge.classList.remove('active')
+}
 
 // ui helpers
 const messageText    = document.getElementById('messageText')
@@ -285,10 +343,17 @@ function startGame() {
     Food.luckyClovers  = []
     Food.bombs         = []
     Food.mysteryBox    = null
+    Food.voidTiles     = []
     Renderer.blindMode = false
     Renderer.resizeCanvas()
     resetScore()
     activeEvent = null
+    Snake.sprinting = false
+    _sprintActive = false
+    clearInterval(_sprintDrainInterval); _sprintDrainInterval = null
+    _sprintBaseSpeed = null
+    const _sbStart = document.getElementById('sprintBadge')
+    if (_sbStart) _sbStart.classList.remove('active')
 
     // Reset per-game stats
     statFoodEaten = 0; statBonusEaten = 0; statBombsEaten = 0
@@ -863,6 +928,7 @@ function cancelActiveEvent() {
     Snake.elixirActive     = false
     Snake.scoreFrozen      = false
     Snake.wormholeActive   = false
+    Food.voidTiles         = []
     // New event intervals
     if (typeof _foodRainInterval  !== 'undefined' && _foodRainInterval)  { clearInterval(_foodRainInterval);  _foodRainInterval  = null }
     if (typeof _scoreSeepInterval !== 'undefined' && _scoreSeepInterval) { clearInterval(_scoreSeepInterval); _scoreSeepInterval = null }
@@ -872,6 +938,9 @@ function cancelActiveEvent() {
     if (typeof _corpseInterval    !== 'undefined' && _corpseInterval)    { clearInterval(_corpseInterval);    _corpseInterval    = null }
     if (typeof _plagueInterval    !== 'undefined' && _plagueInterval)    { clearInterval(_plagueInterval);    _plagueInterval    = null }
     if (typeof _wormholeInterval  !== 'undefined' && _wormholeInterval)  { clearInterval(_wormholeInterval);  _wormholeInterval  = null }
+    if (typeof _voidInterval      !== 'undefined' && _voidInterval)      { clearInterval(_voidInterval);      _voidInterval      = null }
+    if (typeof _quakeInterval     !== 'undefined' && _quakeInterval)     { clearInterval(_quakeInterval);     _quakeInterval     = null }
+    if (typeof _gravWellInterval  !== 'undefined' && _gravWellInterval)  { clearInterval(_gravWellInterval);  _gravWellInterval  = null }
     lengthMultFill.classList.remove('drained')
     Renderer.blindMode   = false
     Food.clearBonus()
@@ -903,9 +972,19 @@ function endGame() {
     if (typeof _corpseInterval    !== 'undefined' && _corpseInterval)    { clearInterval(_corpseInterval);    _corpseInterval    = null }
     if (typeof _plagueInterval    !== 'undefined' && _plagueInterval)    { clearInterval(_plagueInterval);    _plagueInterval    = null }
     if (typeof _wormholeInterval  !== 'undefined' && _wormholeInterval)  { clearInterval(_wormholeInterval);  _wormholeInterval  = null }
+    if (typeof _voidInterval      !== 'undefined' && _voidInterval)      { clearInterval(_voidInterval);      _voidInterval      = null }
+    if (typeof _quakeInterval     !== 'undefined' && _quakeInterval)     { clearInterval(_quakeInterval);     _quakeInterval     = null }
+    if (typeof _gravWellInterval  !== 'undefined' && _gravWellInterval)  { clearInterval(_gravWellInterval);  _gravWellInterval  = null }
     if (activeEvent) { try { activeEvent.remove() } catch(e) {} }
     activeEvent = null; hideEventBanner(); gameLoop = null
     stopMusic()
+    // Reset sprint
+    Snake.sprinting = false
+    _sprintActive = false
+    clearInterval(_sprintDrainInterval); _sprintDrainInterval = null
+    _sprintBaseSpeed = null
+    const _sb = document.getElementById('sprintBadge')
+    if (_sb) _sb.classList.remove('active')
     Leaderboard.saveEntry(score, false)
     if (score > highScore) {
         highScore = score; highScoreDisplay.textContent = highScore

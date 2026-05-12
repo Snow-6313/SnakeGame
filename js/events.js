@@ -710,6 +710,53 @@ const EVENTS = [
         rarity: 'legendary',
         apply: applyWormhole,
         remove: removeWormhole
+    },
+
+    // ── NEW BOARD-MESSING EVENTS ──
+    {
+        name: 'QUAKE',
+        icon: '🌍',
+        duration: 6000,
+        harmful: true,
+        rarity: 'rare',
+        apply: applyQuake,
+        remove: removeQuake
+    },
+    {
+        name: 'CELL DIVIDE',
+        icon: '🔬',
+        duration: 0,
+        harmful: false,
+        rarity: 'epic',
+        apply: applyCellDivide,
+        remove: removeCellDivide
+    },
+    {
+        name: 'VOID',
+        icon: '🕳️',
+        duration: 8000,
+        harmful: true,
+        rarity: 'epic',
+        apply: applyVoid,
+        remove: removeVoid
+    },
+    {
+        name: 'GRAVITY WELL',
+        icon: '🌑',
+        duration: 7000,
+        harmful: true,
+        rarity: 'rare',
+        apply: applyGravityWell,
+        remove: removeGravityWell
+    },
+    {
+        name: 'SCRAMBLE',
+        icon: '🌀',
+        duration: 0,
+        harmful: true,
+        rarity: 'rare',
+        apply: applyScramble,
+        remove: removeScramble
     }
 ]
 
@@ -1900,3 +1947,126 @@ function removeWormhole() {
     setMessage('🌀 WORMHOLE closed.')
 }
 
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ── NEW BOARD-MESSING EVENTS ──────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+
+// QUAKE — food and maze tiles shift 1 tile randomly every 0.8s
+// ============================================================================
+// NEW BOARD-MESSING EVENTS
+// ============================================================================
+
+// QUAKE - food and maze tiles shift 1 tile randomly every 0.8s
+let _quakeInterval = null
+function applyQuake() {
+    setMessage('\u{1F30D} QUAKE \u2014 the board is shaking! Everything is moving!')
+    if (gameRunning) Renderer.flashBorder('#cc8800', 3)
+    clearInterval(_quakeInterval)
+    _quakeInterval = setInterval(() => {
+        if (!gameRunning) { clearInterval(_quakeInterval); _quakeInterval = null; return }
+        const dirs = [{x:0,y:-1},{x:0,y:1},{x:-1,y:0},{x:1,y:0}]
+        const d = dirs[Math.floor(Math.random() * dirs.length)]
+        const nx = (Food.main.x + d.x + Cols) % Cols
+        const ny = (Food.main.y + d.y + Rows) % Rows
+        if (!Snake.body.some(s => s.x === nx && s.y === ny)) { Food.main.x = nx; Food.main.y = ny }
+        for (const b of Food.bonus) {
+            const db = dirs[Math.floor(Math.random() * dirs.length)]
+            b.x = (b.x + db.x + Cols) % Cols
+            b.y = (b.y + db.y + Rows) % Rows
+        }
+        if (Food.mazeTiles.length > 0) {
+            const occ = new Set(Snake.body.map(s => s.x + ',' + s.y))
+            occ.add(Food.main.x + ',' + Food.main.y)
+            Food.mazeTiles = Food.mazeTiles.map(() => {
+                let x, y, t = 0
+                do { x = Math.floor(Math.random() * Cols); y = Math.floor(Math.random() * Rows); t++ }
+                while (occ.has(x + ',' + y) && t < 100)
+                return { x, y }
+            })
+        }
+        Renderer.flashBorder('#cc8800', 1)
+    }, 800)
+}
+function removeQuake() { clearInterval(_quakeInterval); _quakeInterval = null; setMessage('\u{1F30D} QUAKE settled.') }
+
+// CELL DIVIDE - cuts the snake in half but spawns bonus food for each lost segment
+function applyCellDivide() {
+    const half = Math.floor(Snake.body.length / 2)
+    const lost = Snake.body.length - half
+    Snake.cutToLength(half)
+    const spawns = Math.min(lost, 6)
+    for (let i = 0; i < spawns; i++) Food.placeBonus()
+    setMessage('\u{1F52C} CELL DIVIDE \u2014 back half gone! ' + spawns + ' bonus foods appeared!')
+    if (gameRunning) Renderer.flashBorder('#00ccff', 3)
+}
+function removeCellDivide() {}
+
+// VOID - 5 black-hole tiles appear; touching one randomly teleports the snake head
+let _voidInterval = null
+function applyVoid() {
+    Food.voidTiles = []
+    const occupied = new Set(Snake.body.map(s => s.x + ',' + s.y))
+    occupied.add(Food.main.x + ',' + Food.main.y)
+    for (let i = 0; i < 5; i++) {
+        let x, y, t = 0
+        do { x = Math.floor(Math.random() * Cols); y = Math.floor(Math.random() * Rows); t++ }
+        while ((occupied.has(x + ',' + y) || Food.voidTiles.some(v => v.x === x && v.y === y)) && t < 300)
+        Food.voidTiles.push({ x, y })
+    }
+    setMessage('\u{1F573}\uFE0F VOID \u2014 black holes on the board! Touch one and get teleported!')
+    clearInterval(_voidInterval)
+    _voidInterval = setInterval(() => {
+        if (!gameRunning) { clearInterval(_voidInterval); _voidInterval = null; return }
+        const dirs = [{x:0,y:-1},{x:0,y:1},{x:-1,y:0},{x:1,y:0}]
+        for (const v of (Food.voidTiles || [])) {
+            const d = dirs[Math.floor(Math.random() * dirs.length)]
+            const nx = (v.x + d.x + Cols) % Cols
+            const ny = (v.y + d.y + Rows) % Rows
+            if (!Snake.body.some(s => s.x === nx && s.y === ny) &&
+                !Food.voidTiles.some(o => o !== v && o.x === nx && o.y === ny)) { v.x = nx; v.y = ny }
+        }
+    }, 2000)
+}
+function removeVoid() {
+    clearInterval(_voidInterval); _voidInterval = null
+    Food.voidTiles = []
+    setMessage('\u{1F573}\uFE0F VOID collapsed.')
+}
+
+// GRAVITY WELL - all food drifts toward board centre every 0.7s
+let _gravWellInterval = null
+function applyGravityWell() {
+    setMessage('\u{1F311} GRAVITY WELL \u2014 food is being pulled to the centre!')
+    clearInterval(_gravWellInterval)
+    _gravWellInterval = setInterval(() => {
+        if (!gameRunning) { clearInterval(_gravWellInterval); _gravWellInterval = null; return }
+        const cx = Math.floor(Cols / 2), cy = Math.floor(Rows / 2)
+        const dxM = Math.sign(cx - Food.main.x), dyM = Math.sign(cy - Food.main.y)
+        if (Math.abs(cx - Food.main.x) >= Math.abs(cy - Food.main.y) && dxM !== 0) Food.main.x += dxM
+        else if (dyM !== 0) Food.main.y += dyM
+        for (const b of Food.bonus) {
+            const dxB = Math.sign(cx - b.x), dyB = Math.sign(cy - b.y)
+            if (Math.abs(cx - b.x) >= Math.abs(cy - b.y) && dxB !== 0) b.x += dxB
+            else if (dyB !== 0) b.y += dyB
+        }
+    }, 700)
+}
+function removeGravityWell() { clearInterval(_gravWellInterval); _gravWellInterval = null; setMessage('\u{1F311} GRAVITY WELL dissipated.') }
+
+// SCRAMBLE - body segments (not head) teleport to random tiles, creating self-collision risk
+function applyScramble() {
+    if (Snake.body.length <= 3) { setMessage('\u{1F300} SCRAMBLE \u2014 snake too short!'); return }
+    const occupied = new Set()
+    occupied.add(Snake.body[0].x + ',' + Snake.body[0].y)
+    for (let i = 1; i < Snake.body.length; i++) {
+        let x, y, t = 0
+        do { x = Math.floor(Math.random() * Cols); y = Math.floor(Math.random() * Rows); t++ }
+        while (occupied.has(x + ',' + y) && t < 300)
+        occupied.add(x + ',' + y)
+        Snake.body[i].x = x; Snake.body[i].y = y
+    }
+    setMessage('\u{1F300} SCRAMBLE \u2014 your body was scattered across the board!')
+    if (gameRunning) Renderer.flashBorder('#ff00aa', 4)
+}
+function removeScramble() {}

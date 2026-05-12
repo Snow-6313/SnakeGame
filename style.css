@@ -81,6 +81,31 @@ body:has(#titleScreen:not(.hidden)) #topBar span:first-child {
     display: block;
 }
 
+/* Sprint indicator badge — overlaid on top-left of canvas */
+#sprintBadge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: rgba(255, 210, 0, 0.95);
+    color: #1a0c00;
+    font-size: 1.6rem;
+    font-weight: 900;
+    letter-spacing: 3px;
+    padding: 10px 20px;
+    border-radius: 6px;
+    pointer-events: none;
+    display: none;
+    z-index: 50;
+    box-shadow: 0 0 10px rgba(255,220,0,0.7), 0 0 20px rgba(255,180,0,0.4);
+    animation: sprintPulse 0.35s ease-in-out infinite alternate;
+}
+#sprintBadge.active { display: block; }
+
+@keyframes sprintPulse {
+    from { box-shadow: 0 0 8px rgba(255,220,0,0.6), 0 0 16px rgba(255,180,0,0.3); }
+    to   { box-shadow: 0 0 18px rgba(255,240,0,1.0), 0 0 32px rgba(255,200,0,0.7); }
+}
+
 /* Title screen sits on top of the canvas */
 #titleScreen {
     position: absolute;

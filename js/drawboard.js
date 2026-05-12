@@ -5,6 +5,7 @@ const Snake = {
     body: [],
     direction: 'RIGHT',
     nextDirection: 'RIGHT',
+    inputQueue: [],      // buffered direction inputs (max 3)
     ghostMode: false,
     invincible: false,
     reversedControls: false,
@@ -20,12 +21,14 @@ const Snake = {
     echoActive: false,
     streakFrozen: false,
     flatBonus: 0,
+    sprinting: false,    // true while Shift is held
 
     init() {
         this.body = [{ x: 10, y: 10 }, { x: 9, y: 10 }, { x: 8, y: 10 }]
         this.prevBody = this.body.map(s => ({ x: s.x, y: s.y }))
         this.direction = 'RIGHT'
         this.nextDirection = 'RIGHT'
+        this.inputQueue = []
         this.ghostMode = false
         this.invincible = false
         this.reversedControls = false
@@ -41,10 +44,20 @@ const Snake = {
         this.echoActive    = false
         this.streakFrozen  = false
         this.flatBonus     = 0
+        this.sprinting     = false
     },
 
     // returns { moved, head }, { hitWall }, or { hitSelf }
     step() {
+        // Consume next buffered direction (skip 180° reversal)
+        while (this.inputQueue.length > 0) {
+            const candidate = this.inputQueue.shift()
+            const opposites = { UP:'DOWN', DOWN:'UP', LEFT:'RIGHT', RIGHT:'LEFT' }
+            if (candidate !== opposites[this.direction]) {
+                this.nextDirection = candidate
+                break
+            }
+        }
         this.direction = this.nextDirection
         let head = { x: this.body[0].x, y: this.body[0].y }
 
@@ -74,6 +87,25 @@ const Snake = {
         if (!this.invincible && !this.ghostMode && typeof Food !== 'undefined' && Food.eruptionTiles) {
             if (Food.eruptionTiles.some(t => t.x === head.x && t.y === head.y))
                 return { hitWall: true }
+        }
+
+        // Void tiles — teleport head to a random empty tile
+        if (!this.ghostMode && typeof Food !== 'undefined' && (Food.voidTiles || []).length > 0) {
+            const hit = Food.voidTiles.find(t => t.x === head.x && t.y === head.y)
+            if (hit) {
+                // Teleport to a random safe tile
+                let dest = null
+                for (let i = 0; i < 200; i++) {
+                    const tx = Math.floor(Math.random() * Cols)
+                    const ty = Math.floor(Math.random() * Rows)
+                    if (!this.body.some(s => s.x === tx && s.y === ty) &&
+                        !Food.voidTiles.some(v => v.x === tx && v.y === ty)) {
+                        dest = { x: tx, y: ty }; break
+                    }
+                }
+                if (dest) { head.x = dest.x; head.y = dest.y }
+                if (typeof setMessage === 'function') setMessage('🕳️ VOID — sucked in and spat out!')
+            }
         }
 
         if (!this.invincible && !this.ghostMode) {
@@ -147,6 +179,7 @@ const Food = {
     tickingBomb: null,// { x, y, spawnTime, duration } (TICKING TIME BOMB event)
     eruptionTiles: [], // eruption tile walls (ERUPTION event)
     luckyClovers: [],  // lucky clover collectibles (LUCKY CLOVER event)
+    voidTiles: [],    // void holes (VOID event — teleport on touch)
 
     place()      { this.main = this._empty() },
     placeBonus() { this.bonus.push(this._empty()) },
@@ -163,6 +196,7 @@ const Food = {
         if (this.tickingBomb && (this.tickingBomb.x >= Cols || this.tickingBomb.y >= Rows)) this.tickingBomb = null
         this.eruptionTiles = (this.eruptionTiles || []).filter(b => b.x < Cols && b.y < Rows)
         this.luckyClovers  = (this.luckyClovers  || []).filter(b => b.x < Cols && b.y < Rows)
+        this.voidTiles     = (this.voidTiles     || []).filter(b => b.x < Cols && b.y < Rows)
     },
 
     _empty() {
@@ -486,9 +520,40 @@ const Renderer = {
             this.ctx.restore()
         }
 
+        // ── Void tiles — dark swirling holes that teleport the snake ──
+        const voidPulse = 0.5 + 0.5 * Math.sin(Date.now() / 200)
+        for (const v of (Food.voidTiles || [])) {
+            const vx = v.x * tile, vy = v.y * tile
+            this.ctx.save()
+            // Dark background
+            this.ctx.fillStyle = `rgba(0,0,0,${0.85 + 0.15 * voidPulse})`
+            this.ctx.fillRect(vx, vy, tile, tile)
+            // Swirling ring
+            this.ctx.strokeStyle = `rgba(90,0,200,${voidPulse})`
+            this.ctx.lineWidth = 2.5
+            this.ctx.shadowColor = 'rgba(140,0,255,0.8)'
+            this.ctx.shadowBlur = 8
+            this.ctx.beginPath()
+            this.ctx.arc(vx + tile/2, vy + tile/2, tile/2 - 3, 0, Math.PI * 2)
+            this.ctx.stroke()
+            this.ctx.strokeStyle = `rgba(200,100,255,${voidPulse * 0.6})`
+            this.ctx.lineWidth = 1
+            this.ctx.shadowBlur = 0
+            this.ctx.beginPath()
+            this.ctx.arc(vx + tile/2, vy + tile/2, tile/2 - 7, 0, Math.PI * 2)
+            this.ctx.stroke()
+            this.ctx.font = `${Math.round(tile * 0.52)}px serif`
+            this.ctx.textAlign = 'center'
+            this.ctx.textBaseline = 'middle'
+            this.ctx.globalAlpha = 0.7 + 0.3 * voidPulse
+            this.ctx.fillStyle = '#fff'
+            this.ctx.fillText('🕳️', vx + tile/2, vy + tile/2)
+            this.ctx.globalAlpha = 1
+            this.ctx.restore()
+        }
+
         // ── Echo ghost food — semi-transparent double of real food ──
-        if (Snake.echoActive && Food.main) {
-            const echoX = (Food.main.x + 3) % Cols
+        if (Snake.echoActive && Food.main) {            const echoX = (Food.main.x + 3) % Cols
             const echoY = (Food.main.y + 3) % Rows
             this.ctx.save()
             this.ctx.globalAlpha = 0.35 + 0.15 * Math.sin(Date.now() / 250)
@@ -500,12 +565,32 @@ const Renderer = {
     },
 
     drawSnake() {
+        // Sprint afterglow — draw a fading trail behind the snake
+        if (Snake.sprinting && Snake.body.length > 1) {
+            for (let i = 1; i < Math.min(Snake.body.length, 6); i++) {
+                let { x, y } = Snake.body[i]
+                const alpha = 0.35 * (1 - i / 6)
+                this.ctx.save()
+                this.ctx.fillStyle = `rgba(255,220,50,${alpha})`
+                this.ctx.fillRect(x * tile + 2, y * tile + 2, tile - 4, tile - 4)
+                this.ctx.restore()
+            }
+        }
         for (let i = 0; i < Snake.body.length; i++) {
             let { x, y } = Snake.body[i]
-            if (Snake.ghostMode)  this.ctx.fillStyle = this._rgba(this.theme.ghostRGB, 0.5 - (i / Snake.body.length) * 0.3)
+            if (Snake.sprinting && i === 0) {
+                // Head gets a yellow-white sprint glow
+                this.ctx.save()
+                this.ctx.shadowColor = 'rgba(255,230,50,0.9)'
+                this.ctx.shadowBlur  = 12
+                this.ctx.fillStyle = '#ffe040'
+                this.ctx.fillRect(x * tile + 1, y * tile + 1, tile - 2, tile - 2)
+                this.ctx.restore()
+            } else if (Snake.ghostMode)  this.ctx.fillStyle = this._rgba(this.theme.ghostRGB, 0.5 - (i / Snake.body.length) * 0.3)
             else if (i === 0)     this.ctx.fillStyle = this.theme.snakeHead
             else                  this.ctx.fillStyle = `rgba(${this.theme.snakeBodyRGB},${1 - (i / Snake.body.length) * 0.55})`
-            this.ctx.fillRect(x * tile + 1, y * tile + 1, tile - 2, tile - 2)
+            if (!(Snake.sprinting && i === 0))
+                this.ctx.fillRect(x * tile + 1, y * tile + 1, tile - 2, tile - 2)
         }
     },
 

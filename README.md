@@ -25,6 +25,7 @@ No build step or server required.
 | `← A` | Move Left |
 | `→ D` | Move Right |
 | `P` | Pause / Resume |
+| `Shift` (hold) | **Sprint** — 2× speed, drains 2 pts every 0.3s |
 
 - **Eat** the orange food to grow and score points.
 - **Avoid** hitting walls or your own body.
@@ -47,8 +48,8 @@ Events fire every 8 seconds. A **pre-warning banner** and countdown bar give you
 | Rarity | Count | Examples |
 |--------|-------|---------|
 | Common | 10 | Speed Boost, Slow Motion, Bonus Food, Loop Board, Teleport, Growth, Lucky Clover, Food Rain, Score Seep |
-| Rare | 23 | Double Points, Ghost Mode, Food Frenzy, Moving Food, Magnet, Score Drain, Wall Maze, Antidote, Elixir, Flat Bonus, Carnival, Leech, Muddy Ground |
-| Epic | 26 | Triple Points, Invincible, Shrink, Score Multiplier ×5, All Seeing Eye, Rewind, Bomb Food, Mirror Board, Gamble, Overdrive, Eruption, Streak Lock, Trident, Corpse Walk, Score Freeze |
+| Rare | 23 | Double Points, Ghost Mode, Food Frenzy, Moving Food, Magnet, Score Drain, Wall Maze, Antidote, Elixir, Flat Bonus, Carnival, Leech, Muddy Ground, **Quake, Gravity Well, Scramble** |
+| Epic | 26 | Triple Points, Invincible, Shrink, Score Multiplier ×5, All Seeing Eye, Rewind, Bomb Food, Mirror Board, Gamble, Overdrive, Eruption, Streak Lock, Trident, Corpse Walk, Score Freeze, **Void, Cell Divide** |
 | Legendary | 16 | Golden Hour, Score Jackpot, Full Send, Time Stop, Feast, God's Eye, Prismatic, Divine Trade, Eclipse, Echo, Necromancer, Plague, Wormhole |
 | Mythic | 1 | Cosmic Jackpot (once per session, ~1% chance) |
 
