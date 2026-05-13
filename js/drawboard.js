@@ -89,6 +89,12 @@ const Snake = {
                 return { hitWall: true }
         }
 
+        // Corpse Walk ghost snake — touching it kills you
+        if (!this.invincible && !this.ghostMode && typeof Food !== 'undefined' && Food.corpseTiles && Food.corpseTiles.length > 0) {
+            if (Food.corpseTiles.some(t => t.x === head.x && t.y === head.y))
+                return { hitWall: true }
+        }
+
         // Void tiles — teleport head to a random empty tile
         if (!this.ghostMode && typeof Food !== 'undefined' && (Food.voidTiles || []).length > 0) {
             const hit = Food.voidTiles.find(t => t.x === head.x && t.y === head.y)
@@ -180,6 +186,7 @@ const Food = {
     eruptionTiles: [], // eruption tile walls (ERUPTION event)
     luckyClovers: [],  // lucky clover collectibles (LUCKY CLOVER event)
     voidTiles: [],    // void holes (VOID event — teleport on touch)
+    corpseTiles: [],  // ghost snake segments (CORPSE WALK event)
 
     place()      { this.main = this._empty() },
     placeBonus() { this.bonus.push(this._empty()) },
@@ -482,8 +489,32 @@ const Renderer = {
             this.ctx.restore()
         }
 
+        // ── Corpse Walk ghost snake ──
+        const corpseTiles = Food.corpseTiles || []
+        if (corpseTiles.length > 0) {
+            const ghostAlpha = 0.55 + 0.3 * Math.sin(Date.now() / 200)
+            corpseTiles.forEach((seg, i) => {
+                const gx = seg.x * tile, gy = seg.y * tile
+                this.ctx.save()
+                const fade = 1 - (i / corpseTiles.length) * 0.6
+                this.ctx.fillStyle = `rgba(100,220,100,${ghostAlpha * fade})`
+                this.ctx.fillRect(gx + 1, gy + 1, tile - 2, tile - 2)
+                this.ctx.strokeStyle = `rgba(180,255,180,${ghostAlpha * fade})`
+                this.ctx.lineWidth = 1.5
+                this.ctx.strokeRect(gx + 2, gy + 2, tile - 4, tile - 4)
+                if (i === 0) {
+                    this.ctx.font = `${Math.round(tile * 0.55)}px serif`
+                    this.ctx.textAlign = 'center'
+                    this.ctx.textBaseline = 'middle'
+                    this.ctx.globalAlpha = ghostAlpha
+                    this.ctx.fillText('💀', gx + tile / 2, gy + tile / 2)
+                    this.ctx.globalAlpha = 1
+                }
+                this.ctx.restore()
+            })
+        }
+
         // ── Eruption tiles — glowing lava walls ──
-        const erupPulse = 0.6 + 0.4 * Math.sin(Date.now() / 150)
         for (const t of (Food.eruptionTiles || [])) {
             const ex = t.x * tile, ey = t.y * tile
             this.ctx.save()

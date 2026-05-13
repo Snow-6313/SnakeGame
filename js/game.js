@@ -12,7 +12,7 @@ const speedSlow   = 250
 // sounds
 const sfxEat = new Audio('Sounds/ding.mp3')
 sfxEat.volume = 0.6
-const bgMusic = new Audio('Sounds/')
+const bgMusic = new Audio('Sounds/Music.mp3')
 bgMusic.loop = true; bgMusic.volume = 0.35
 
 function playEatSound() { sfxEat.currentTime = 0; sfxEat.play().catch(() => {}) }
@@ -127,7 +127,7 @@ document.addEventListener('keydown', (e) => {
     if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) e.preventDefault()
 
     // Sprint (Shift key)
-    if (e.key === 'Shift' && gameRunning && !Snake.sprinting) {
+    if (e.key === 'Shift' && gameRunning && !Snake.sprinting && score > 0) {
         Snake.sprinting = true
         _sprintActive = true
         if (!_sprintDrainInterval) {
@@ -136,6 +136,12 @@ document.addEventListener('keydown', (e) => {
                 if (score > 0) {
                     score = Math.max(0, score - 2)
                     scoreDisplay.textContent = score
+                }
+                if (score <= 0) {
+                    Snake.sprinting = false
+                    _sprintActive = false
+                    clearInterval(_sprintDrainInterval); _sprintDrainInterval = null
+                    _removeSprint()
                 }
             }, 300)
         }
@@ -344,7 +350,7 @@ function startGame() {
     Food.bombs         = []
     Food.mysteryBox    = null
     Food.voidTiles     = []
-    Renderer.blindMode = false
+    Food.corpseTiles   = []
     Renderer.resizeCanvas()
     resetScore()
     activeEvent = null
@@ -919,7 +925,7 @@ function cancelActiveEvent() {
     Food.fakeFoods         = []
     Food.tickingBomb       = null
     Food.eruptionTiles     = []
-    Food.luckyClovers      = []
+    Food.corpseTiles       = []
     Snake.tridentActive    = false
     Snake.echoActive       = false
     Snake.streakFrozen     = false
@@ -941,6 +947,12 @@ function cancelActiveEvent() {
     if (typeof _voidInterval      !== 'undefined' && _voidInterval)      { clearInterval(_voidInterval);      _voidInterval      = null }
     if (typeof _quakeInterval     !== 'undefined' && _quakeInterval)     { clearInterval(_quakeInterval);     _quakeInterval     = null }
     if (typeof _gravWellInterval  !== 'undefined' && _gravWellInterval)  { clearInterval(_gravWellInterval);  _gravWellInterval  = null }
+    if (typeof _revenantInterval  !== 'undefined' && _revenantInterval)  { clearInterval(_revenantInterval);  _revenantInterval  = null }
+    if (typeof _packInterval      !== 'undefined' && _packInterval)      { clearInterval(_packInterval);      _packInterval      = null }
+    if (typeof _phantomInterval   !== 'undefined' && _phantomInterval)   { clearInterval(_phantomInterval);   _phantomInterval   = null }
+    if (typeof _soulInterval      !== 'undefined' && _soulInterval)      { clearInterval(_soulInterval);      _soulInterval      = null }
+    if (typeof _soulGrowInterval  !== 'undefined' && _soulGrowInterval)  { clearInterval(_soulGrowInterval);  _soulGrowInterval  = null }
+    if (typeof _spiralInterval    !== 'undefined' && _spiralInterval)    { clearInterval(_spiralInterval);    _spiralInterval    = null }
     lengthMultFill.classList.remove('drained')
     Renderer.blindMode   = false
     Food.clearBonus()
@@ -975,6 +987,12 @@ function endGame() {
     if (typeof _voidInterval      !== 'undefined' && _voidInterval)      { clearInterval(_voidInterval);      _voidInterval      = null }
     if (typeof _quakeInterval     !== 'undefined' && _quakeInterval)     { clearInterval(_quakeInterval);     _quakeInterval     = null }
     if (typeof _gravWellInterval  !== 'undefined' && _gravWellInterval)  { clearInterval(_gravWellInterval);  _gravWellInterval  = null }
+    if (typeof _revenantInterval  !== 'undefined' && _revenantInterval)  { clearInterval(_revenantInterval);  _revenantInterval  = null }
+    if (typeof _packInterval      !== 'undefined' && _packInterval)      { clearInterval(_packInterval);      _packInterval      = null }
+    if (typeof _phantomInterval   !== 'undefined' && _phantomInterval)   { clearInterval(_phantomInterval);   _phantomInterval   = null }
+    if (typeof _soulInterval      !== 'undefined' && _soulInterval)      { clearInterval(_soulInterval);      _soulInterval      = null }
+    if (typeof _soulGrowInterval  !== 'undefined' && _soulGrowInterval)  { clearInterval(_soulGrowInterval);  _soulGrowInterval  = null }
+    if (typeof _spiralInterval    !== 'undefined' && _spiralInterval)    { clearInterval(_spiralInterval);    _spiralInterval    = null }
     if (activeEvent) { try { activeEvent.remove() } catch(e) {} }
     activeEvent = null; hideEventBanner(); gameLoop = null
     stopMusic()

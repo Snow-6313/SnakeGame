@@ -757,6 +757,17 @@ const EVENTS = [
         rarity: 'rare',
         apply: applyScramble,
         remove: removeScramble
+    },
+
+    // ── LEGENDARY GHOST SNAKE EVENT ──
+    {
+        name: 'HAUNTING',
+        icon: '👻',
+        duration: 10000,
+        harmful: true,
+        rarity: 'legendary',
+        apply: applyHaunting,
+        remove: removeHaunting
     }
 ]
 
@@ -1848,26 +1859,196 @@ function applyTrident() {
 }
 function removeTrident() { Snake.tridentActive = false }
 
-// CORPSE WALK — dead segments re-appear as hazard walls at random positions every 1.5s
+// CORPSE WALK — a ghost snake spawns and wanders the board; touching it kills you
 let _corpseInterval = null
+let _corpseSnake = []        // array of {x,y} segments
+let _corpseDir = 'RIGHT'
+const _corpseDirs = ['UP','DOWN','LEFT','RIGHT']
+
+function _corpseStep() {
+    if (!gameRunning || _corpseSnake.length === 0) return
+    // Occasionally turn randomly
+    if (Math.random() < 0.35) {
+        const opposite = { UP:'DOWN', DOWN:'UP', LEFT:'RIGHT', RIGHT:'LEFT' }
+        const options = _corpseDirs.filter(d => d !== opposite[_corpseDir])
+        _corpseDir = options[Math.floor(Math.random() * options.length)]
+    }
+    const head = { ..._corpseSnake[0] }
+    if (_corpseDir === 'UP')    head.y--
+    if (_corpseDir === 'DOWN')  head.y++
+    if (_corpseDir === 'LEFT')  head.x--
+    if (_corpseDir === 'RIGHT') head.x++
+    // Wrap edges
+    if (head.x < 0)     head.x = Cols - 1
+    if (head.x >= Cols) head.x = 0
+    if (head.y < 0)     head.y = Rows - 1
+    if (head.y >= Rows) head.y = 0
+    _corpseSnake.unshift(head)
+    _corpseSnake.pop()
+    // Update hazard tiles so collision detection works
+    Food.corpseTiles = _corpseSnake.map(s => ({ ...s }))
+}
+
 function applyCorpseWalk() {
-    setMessage('🧟 CORPSE WALK — ghost segments haunt the board!')
-    // Hazard tiles are rendered as fake food (slightly different colour via fakeFoods array)
+    setMessage('🧟 CORPSE WALK — a ghost snake stalks the board!')
     clearInterval(_corpseInterval)
-    let spawned = 0
+    // Spawn the ghost snake at a safe location, length 6
+    _corpseSnake = []
+    _corpseDir = _corpseDirs[Math.floor(Math.random() * _corpseDirs.length)]
+    let startX, startY
+    do {
+        startX = 2 + Math.floor(Math.random() * (Cols - 4))
+        startY = 2 + Math.floor(Math.random() * (Rows - 4))
+    } while (Snake.body.some(s => s.x === startX && s.y === startY))
+    for (let i = 0; i < 6; i++) _corpseSnake.push({ x: startX - i, y: startY })
+    Food.corpseTiles = _corpseSnake.map(s => ({ ...s }))
     _corpseInterval = setInterval(() => {
         if (!gameRunning) { clearInterval(_corpseInterval); return }
-        if (spawned < 6) {
-            const t = Food._emptyAvoidFood()
-            Food.fakeFoods.push(t)   // reuse fakeFoods as ghost hazard tiles
-            spawned++
-        }
-    }, 1500)
+        _corpseStep()
+    }, 250)
 }
 function removeCorpseWalk() {
     clearInterval(_corpseInterval); _corpseInterval = null
-    Food.fakeFoods = []
+    _corpseSnake = []
+    Food.corpseTiles = []
 }
+
+// ── LEGENDARY CORPSE WALK VARIANTS ──
+
+// Helper: spawn a ghost snake body at a safe random location
+function _spawnGhostSnake(length) {
+    let sx, sy
+    let tries = 0
+    do {
+        sx = 2 + Math.floor(Math.random() * (Cols - 4))
+        sy = 2 + Math.floor(Math.random() * (Rows - 4))
+        tries++
+    } while (tries < 200 && Snake.body.some(s => s.x === sx && s.y === sy))
+    const body = []
+    for (let i = 0; i < length; i++) body.push({ x: sx - i, y: sy })
+    return body
+}
+
+// Helper: move a ghost snake body one step in a given dir (wrapping), with random turns
+function _stepGhostSnake(body, dirRef, turnChance) {
+    if (Math.random() < turnChance) {
+        const opposite = { UP:'DOWN', DOWN:'UP', LEFT:'RIGHT', RIGHT:'LEFT' }
+        const options = _corpseDirs.filter(d => d !== opposite[dirRef.dir])
+        dirRef.dir = options[Math.floor(Math.random() * options.length)]
+    }
+    const head = { ...body[0] }
+    if (dirRef.dir === 'UP')    head.y--
+    if (dirRef.dir === 'DOWN')  head.y++
+    if (dirRef.dir === 'LEFT')  head.x--
+    if (dirRef.dir === 'RIGHT') head.x++
+    head.x = ((head.x % Cols) + Cols) % Cols
+    head.y = ((head.y % Rows) + Rows) % Rows
+    body.unshift(head)
+    body.pop()
+}
+
+// HAUNTING — all 5 ghost variants spawn simultaneously, each with a distinct personality.
+// A single 100ms master interval drives all of them using per-ghost tickEvery counters.
+//
+//  specter  — length 8,  moves every 1 tick (100ms), rarely turns  → blazing fast bullet
+//  colossus — length 18, moves every 4 ticks (400ms), turns often  → slow lumbering wall
+//  tracker  — length 6,  moves every 2 ticks (200ms), steers toward player head
+//  creeper  — length 4,  moves every 3 ticks (300ms), grows 1 tile every 10 ticks
+//  spiral   — length 9,  moves every 2 ticks (200ms), turns clockwise every 5 moves
+
+let _hauntingInterval  = null
+let _hauntingInterval2 = null   // unused but kept for cancelActiveEvent compat
+let _hauntingSnakes    = []
+let _hauntingVariant   = ''
+
+function applyHaunting() {
+    clearInterval(_hauntingInterval)
+    clearInterval(_hauntingInterval2)
+    _hauntingSnakes = []
+    _hauntingVariant = 'all'
+
+    const dirs = _corpseDirs
+    function rdir() { return dirs[Math.floor(Math.random() * 4)] }
+
+    _hauntingSnakes = [
+        // 1. Specter — blazing fast, rarely turns
+        { body: _spawnGhostSnake(8),  dirRef: { dir: rdir()  }, tickEvery: 1, tick: 0, turnChance: 0.12, tag: 'specter',  spiralCtr: 0, growEvery: 0,  growCtr: 0 },
+        // 2. Colossus — slow giant, wiggles a lot
+        { body: _spawnGhostSnake(18), dirRef: { dir: rdir()  }, tickEvery: 4, tick: 0, turnChance: 0.45, tag: 'colossus', spiralCtr: 0, growEvery: 0,  growCtr: 0 },
+        // 3. Tracker — hunts the player
+        { body: _spawnGhostSnake(6),  dirRef: { dir: rdir()  }, tickEvery: 2, tick: 0, turnChance: 0,    tag: 'tracker',  spiralCtr: 0, growEvery: 0,  growCtr: 0 },
+        // 4. Creeper — grows every 10 ticks
+        { body: _spawnGhostSnake(4),  dirRef: { dir: rdir()  }, tickEvery: 3, tick: 0, turnChance: 0.30, tag: 'creeper',  spiralCtr: 0, growEvery: 10, growCtr: 0 },
+        // 5. Spiral — turns clockwise every 5 moves
+        { body: _spawnGhostSnake(9),  dirRef: { dir: 'RIGHT' }, tickEvery: 2, tick: 0, turnChance: 0,    tag: 'spiral',   spiralCtr: 0, growEvery: 0,  growCtr: 0 },
+    ]
+
+    setMessage('👻 HAUNTING — all five spirits rise!')
+
+    const syncTiles = () => {
+        Food.corpseTiles = _hauntingSnakes.flatMap(p => p.body.map(s => ({ ...s })))
+    }
+    syncTiles()
+
+    const CW = ['UP','RIGHT','DOWN','LEFT']
+
+    _hauntingInterval = setInterval(() => {
+        if (!gameRunning) { clearInterval(_hauntingInterval); return }
+
+        _hauntingSnakes.forEach(p => {
+            p.tick++
+            if (p.tick < p.tickEvery) return
+            p.tick = 0
+
+            if (p.tag === 'tracker' && Snake.body.length > 0) {
+                const head = p.body[0]
+                const ph   = Snake.body[0]
+                const dx   = ph.x - head.x
+                const dy   = ph.y - head.y
+                const opp  = { UP:'DOWN', DOWN:'UP', LEFT:'RIGHT', RIGHT:'LEFT' }
+                let preferred = Math.abs(dx) >= Math.abs(dy)
+                    ? (dx > 0 ? 'RIGHT' : 'LEFT')
+                    : (dy > 0 ? 'DOWN'  : 'UP')
+                if (preferred === opp[p.dirRef.dir]) {
+                    const opts = CW.filter(d => d !== opp[p.dirRef.dir])
+                    preferred = opts[Math.floor(Math.random() * opts.length)]
+                }
+                p.dirRef.dir = Math.random() < 0.72
+                    ? preferred
+                    : CW.filter(d => d !== opp[p.dirRef.dir])[Math.floor(Math.random() * 3)]
+            } else if (p.tag === 'spiral') {
+                p.spiralCtr++
+                if (p.spiralCtr >= 5) {
+                    p.spiralCtr = 0
+                    const i = CW.indexOf(p.dirRef.dir)
+                    p.dirRef.dir = CW[(i + 1) % 4]
+                }
+            }
+
+            _stepGhostSnake(p.body, p.dirRef, p.turnChance)
+
+            if (p.growEvery > 0) {
+                p.growCtr++
+                if (p.growCtr >= p.growEvery) {
+                    p.growCtr = 0
+                    const tail = p.body[p.body.length - 1]
+                    p.body.push({ ...tail })
+                }
+            }
+        })
+
+        syncTiles()
+    }, 100)
+}
+function removeHaunting() {
+    clearInterval(_hauntingInterval);  _hauntingInterval  = null
+    clearInterval(_hauntingInterval2); _hauntingInterval2 = null
+    _hauntingSnakes  = []
+    _hauntingVariant = ''
+    Food.corpseTiles = []
+}
+
+// (old individual variants replaced — all 5 now spawn together in applyHaunting)
 
 // SCORE FREEZE — all score gains are nullified for 5s (eating food gives 0 pts but still grows)
 function applyScoreFreeze() {
